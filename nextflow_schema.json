@@ -10,6 +10,7 @@
     },
     "primers": {
       "type": "string",
+      "default": "assets/primers.csv",
       "description": "Primer CSV with Gene, Forward_Primer, Reverse_Primer, and Size columns."
     },
     "raw_data_dir": {
@@ -18,6 +19,7 @@
     },
     "reference_fasta": {
       "type": "string",
+      "default": "assets/references/vertebrate_dna_ref_panel.fasta",
       "description": "Curated local vertebrate reference FASTA used to build the BLAST database."
     },
     "outdir": {
@@ -233,12 +235,12 @@
     },
     "curated_reference_metadata": {
       "type": "string",
-      "default": "",
+      "default": "assets/references/vertebrate_dna_ref_panel.taxonomy.tsv",
       "description": "Optional CSV/TSV sidecar for curated reference records with seqid, taxid, scientific_name, rank, and provenance."
     },
     "reference_targets": {
       "type": "string",
-      "default": "../references/ghana_west_africa_reference_targets.tsv",
+      "default": "assets/references/ghana_west_africa_reference_targets.tsv",
       "description": "Ghana/West African accession-driven reference target manifest used by production preflight and panel-building checks."
     },
     "require_curated_taxids": {
@@ -418,7 +420,7 @@
     },
     "advanced_demux_container": {
       "type": "string",
-      "default": "python:3.11-slim-bookworm@sha256:e2d3af735aff6eeee600b1933bedd99da6645fedf572cc12ef4cc1331f2ceebe",
+      "default": "python:3.11@sha256:0c3b4dde908ad46418559b4b713a877d535e5d9b7113f5cc80163e31ed32771e",
       "description": "Container (digest-pinned) used by the built-in pooled FASTQ header-tag demultiplexing wrapper."
     },
     "medaka_container": {
@@ -435,6 +437,11 @@
       "type": "string",
       "default": "multiqc/multiqc:v1.25@sha256:ad08efaedd4e31b860edf05d058ff16178692924b1b0e74ed1db387ce3ba0ffd",
       "description": "MultiQC container (digest-pinned) used when --enable_multiqc true."
+    },
+    "help": {
+      "type": "boolean",
+      "default": false,
+      "description": "Print usage help and exit."
     }
   },
   "required": [

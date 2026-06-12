@@ -25,12 +25,13 @@ RECOMMENDED_METADATA_COLUMNS = [
     "collection_location",
     "bioclimatic_zone",
     "collection_region",
-    "collection_cordinates",
     "collection_context",
     "collection_method",
     "specimen_sex",
 ]
 
+RECOMMENDED_COORDINATE_COLUMNS = ["latitude", "longitude"]
+LEGACY_COORDINATE_COLUMN = "collection_cordinates"
 PRODUCTION_METADATA_COLUMNS = [
     "samplesheet_schema_version",
     "minknow_run_folder",
@@ -141,6 +142,17 @@ def validate_coordinate(value):
     return -90 <= lat <= 90 and -180 <= lon <= 180
 
 
+def validate_lat_lon(latitude, longitude):
+    if not str(latitude or "").strip() or not str(longitude or "").strip():
+        return False
+    try:
+        lat = float(str(latitude).strip())
+        lon = float(str(longitude).strip())
+    except ValueError:
+        return False
+    return -90 <= lat <= 90 and -180 <= lon <= 180
+
+
 def main():
     parser = argparse.ArgumentParser(description="Validate HÆMA blood-meal pipeline inputs")
     parser.add_argument("--samplesheet", required=True)
@@ -186,6 +198,13 @@ def main():
         report["warnings"].append(
             "Samplesheet missing recommended MIEM/MIMARKS-style columns: "
             + ", ".join(missing_recommended_cols)
+        )
+    has_decimal_coordinates = all(col in sample_columns for col in RECOMMENDED_COORDINATE_COLUMNS)
+    has_legacy_coordinates = LEGACY_COORDINATE_COLUMN in sample_columns
+    if not has_decimal_coordinates and not has_legacy_coordinates:
+        report["warnings"].append(
+            "Samplesheet missing recommended coordinate metadata: latitude/longitude "
+            f"(or legacy {LEGACY_COORDINATE_COLUMN})."
         )
 
     missing_production_cols = [col for col in PRODUCTION_METADATA_COLUMNS if col not in sample_columns]
@@ -281,14 +300,27 @@ def main():
         row["sample_uid"] = sample_uid
         row_keys.add((run_id, barcode_id))
         sample_ids[sample_uid] += 1
-
-        for col in RECOMMENDED_METADATA_COLUMNS:
-            if col in sample_columns and (row.get("sample_type") or "").strip() == "sample":
-                if not (row.get(col) or "").strip():
-                    report["missing_metadata_by_column"][col] = report["missing_metadata_by_column"].get(col, 0) + 1
-
         sample_type = (row.get("sample_type") or "").strip()
         sample_type_lower = sample_type.lower()
+
+        for col in RECOMMENDED_METADATA_COLUMNS:
+            if col in sample_columns and sample_type_lower == "sample":
+                if not (row.get(col) or "").strip():
+                    report["missing_metadata_by_column"][col] = report["missing_metadata_by_column"].get(col, 0) + 1
+        if sample_type_lower == "sample":
+            if has_decimal_coordinates:
+                for col in RECOMMENDED_COORDINATE_COLUMNS:
+                    if not (row.get(col) or "").strip():
+                        report["missing_metadata_by_column"][col] = report["missing_metadata_by_column"].get(col, 0) + 1
+                if (row.get("latitude") or row.get("longitude")) and not validate_lat_lon(
+                    row.get("latitude"), row.get("longitude")
+                ):
+                    report["warnings"].append(f"Line {line_no}: latitude/longitude are not valid decimal degrees.")
+            elif has_legacy_coordinates and not (row.get(LEGACY_COORDINATE_COLUMN) or "").strip():
+                report["missing_metadata_by_column"][LEGACY_COORDINATE_COLUMN] = (
+                    report["missing_metadata_by_column"].get(LEGACY_COORDINATE_COLUMN, 0) + 1
+                )
+
         if production_mode:
             if sample_type_lower == "sample":
                 for col in ["latitude", "longitude", "extraction_batch", "pcr_batch", "library_batch", "barcode_kit", "flowcell", "basecalling_model"]:
@@ -325,7 +357,7 @@ def main():
                 except ValueError:
                     report["errors"].append(f"Line {line_no}: latitude/longitude are not valid decimal degrees")
 
-        coord_col = "collection_cordinates"
+        coord_col = LEGACY_COORDINATE_COLUMN
         if coord_col in sample_columns and (row.get("sample_type") or "").strip() == "sample":
             coord = (row.get(coord_col) or "").strip()
             if coord and not validate_coordinate(coord):

@@ -22,9 +22,12 @@ RUN apt-get update \
 # transitively by phyloseq and is verified by R_BIOCONDUCTOR_PREFLIGHT. tidyverse was
 # previously installed but is unused, so it is dropped to cut build time and image size.
 # Bioconductor release is pinned to 3.20 (the release mapped to R 4.4.x) for reproducibility.
-RUN Rscript -e 'install.packages("BiocManager", repos = "https://cloud.r-project.org")' \
-    && Rscript -e 'BiocManager::install(version = "3.20", ask = FALSE, update = FALSE)' \
-    && Rscript -e 'BiocManager::install(c("phyloseq", "decontam", "ape"), ask = FALSE, update = FALSE)'
+#
+# Pin CRAN to cloud.r-project.org (the rocker default PPM mirror p3m.dev was unreliable here),
+# raise the download timeout, and build in parallel.
+RUN Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"), timeout = 600, Ncpus = max(1L, parallel::detectCores())); install.packages("BiocManager")' \
+    && Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"), timeout = 600); BiocManager::install(version = "3.20", ask = FALSE, update = FALSE)' \
+    && Rscript -e 'options(repos = c(CRAN = "https://cloud.r-project.org"), timeout = 600, Ncpus = max(1L, parallel::detectCores())); BiocManager::install(c("phyloseq", "decontam", "ape"), ask = FALSE, update = FALSE)'
 
 # Fail the build early if the formal Bioconductor stack is not importable.
 RUN Rscript -e 'stopifnot(all(vapply(c("phyloseq","decontam","ape"), requireNamespace, logical(1), quietly = TRUE))); cat("haema-r deps OK\n")'

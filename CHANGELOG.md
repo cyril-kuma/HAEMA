@@ -37,6 +37,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   convention, and a release checklist under `docs/`.
 
 ### Changed
+- `nextflow run . --help` prints usage, required inputs, profiles, and the opt-in feature gates;
+  every run now logs a "Feature gates" line so default on/off states are visible at a glance.
+- `haema-r` image build hardened to use a reliable CRAN mirror (`cloud.r-project.org`) with a
+  longer timeout, fixing intermittent `SSL connect error` failures; both custom images build and
+  self-test their imports.
+- Input validation accepts decimal `latitude`/`longitude` and the legacy `collection_cordinates`
+  column without spurious warnings; samplesheets standardised on the full MIEM/MIMARKS header.
 - All container images are pinned by immutable digest (or, for `ontresearch/medaka`, an
   immutable upstream sha-tag); nothing uses `:latest`.
 - Output, log, and work directories now default to `launchDir`-relative paths (portable).

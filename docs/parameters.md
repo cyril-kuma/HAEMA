@@ -15,6 +15,15 @@ likely to set.
 | `--curated_reference_metadata` | bundled sidecar | `seqid,taxid,scientific_name,rank,...` taxonomy sidecar. |
 | `--outdir` / `--log_dir` | `<launchDir>/results` / `logs` | Output / log locations. |
 
+## Why Some Defaults Are `false`
+The default profile is intentionally easy to launch on a laptop or workstation. `false` usually means
+"optional gate disabled until you ask for it", not "missing configuration": advanced pooled-FASTQ
+demultiplexing, Medaka polishing, strict metadata/barcode checks, required curated taxids, required
+NCBI taxdump, strict Bioconductor enforcement, and work-directory cleanup all need extra inputs,
+containers, or operational choices. `-profile production` turns on the strict scientific checks and
+full production feature set. The tiny `test` profile also disables taxonomy/R/MultiQC by default for
+speed; pass `--skip_taxonomy false` when you want the demo to exercise curated BLAST.
+
 ## QC & marker splitting
 | Parameter | Default | Description |
 |---|---|---|

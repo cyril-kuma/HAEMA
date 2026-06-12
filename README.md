@@ -34,8 +34,11 @@ flowchart TD
     I --> J["09 · Endpoints: master table, host calls,<br/>phyloseq/decontam .rds, reports"]
 ```
 
-Optional/staged steps (off by default): pattern-aware demultiplexing of pooled FASTQ, Medaka
-polishing, formal phyloseq/decontam (R/Bioconductor), MultiQC, and an external `nt` BLAST fallback.
+Optional/staged gates are conservative by default: pooled-FASTQ demultiplexing and Medaka polishing
+are off unless requested, strict production metadata/taxid/taxdump/Bioconductor checks are off until
+`-profile production`, and an external `nt` BLAST fallback runs only when you supply a database.
+Fallback R outputs and MultiQC are enabled in normal runs, while the tiny `test` profile disables
+heavier report steps unless you explicitly turn them back on.
 
 ---
 
@@ -66,9 +69,14 @@ downloads, or edits required** beyond pulling one small public container.
 ```bash
 git clone <repository-url> haema && cd haema
 
+nextflow run . --help          # usage, required inputs, profiles, and the opt-in feature gates
+
 # ~1 minute. Validates your install end to end (curated BLAST taxonomy on demo hosts).
 nextflow run . -profile test,docker --skip_taxonomy false --outdir results/test
 ```
+
+Every run prints a **Feature gates** line showing which optional steps are on/off, so the
+defaults are never a mystery (see [docs/parameters.md](docs/parameters.md#why-some-defaults-are-false)).
 
 You should see `Execution complete` and these files appear:
 
@@ -97,7 +105,7 @@ On Singularity/Apptainer HPC, swap the engine: `-profile test,singularity`.
 A template is provided at [`assets/samplesheets/example_samplesheet.csv`](assets/samplesheets/example_samplesheet.csv).
 Key columns: `run_id`, `barcode_id`, `sample_id`, `sample_type`
 (`sample` / `positive_control` / `negative_control`), and ecological/MIEM metadata
-(coordinates, zone, species, batches). `run_id` must match the top-level folder name under
+(decimal `latitude`/`longitude`, zone, species, batches). `run_id` must match the top-level folder name under
 `--raw_data_dir`; `barcode_id` must match the `barcodeXX` folder. Development mode is lenient
 about optional metadata; `-profile production` enforces the full MIEM/MIMARKS field set.
 

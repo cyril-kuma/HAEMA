@@ -37,7 +37,8 @@ cp assets/samplesheets/example_samplesheet.csv my_samplesheet.csv
 - For each `positive_control`, set `expected_host_scientific_name` (e.g. `Bos taurus`) so the
   pipeline can automatically check that the control recovered its known host
   (`06_reports/positive_control_check.tsv`; pass/fail surfaced in the report).
-- Fill ecological metadata as completely as you can (coordinates, zone, species, batches).
+- Fill ecological metadata as completely as you can (decimal `latitude`/`longitude`, zone, species,
+  batches).
   `-profile production` requires the full MIEM/MIMARKS field set.
 
 **Data layout** the validator expects:

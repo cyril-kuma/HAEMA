@@ -16,6 +16,15 @@ PRIMERS = REPO / "assets" / "test_data" / "primers.csv"
 
 GOOD_HEADER = "run_id,barcode_id,sample_id,sample_type"
 GOOD_ROW = "RUN_TEST,barcode01,TST001,sample"
+FULL_HEADER = (
+    "run_id,barcode_id,sample_id,specimen_id,sample_type,species,sibling_species,"
+    "feeding_status,collection_date,collection_time,collection_location,bioclimatic_zone,"
+    "collection_region,latitude,longitude,collection_context,collection_method,specimen_sex"
+)
+FULL_ROW = (
+    "RUN_TEST,barcode01,TST001,TST001,sample,Anopheles_gambiae_s.l,Anopheles_coluzzii,"
+    "Blood_fed,2026-01-01,00:00,Test_site,Forest,Test_region,0,0,Indoor,LTC,Female"
+)
 
 
 def run_validate(samplesheet, primers):
@@ -54,12 +63,20 @@ def main():
         if r.returncode == 0 or "primer file missing required columns" not in r.stderr.lower():
             failures.append(f"malformed primer file should fail clearly (rc={r.returncode})")
 
+        # 4. Current coordinate columns should not trigger the legacy typo-column warning.
+        full = write(tmp, "full_metadata.csv", f"{FULL_HEADER}\n{FULL_ROW}\n")
+        r = run_validate(full, PRIMERS)
+        if r.returncode != 0:
+            failures.append(f"full metadata samplesheet should pass (rc={r.returncode}; {r.stderr[-200:]})")
+        if "collection_cordinates" in r.stderr:
+            failures.append("latitude/longitude samplesheet should not warn about collection_cordinates")
+
     if failures:
         print("validation tests FAILED:", file=sys.stderr)
         for f in failures:
             print(f"  - {f}", file=sys.stderr)
         sys.exit(1)
-    print("validation tests PASSED (3 cases)")
+    print("validation tests PASSED (4 cases)")
 
 
 if __name__ == "__main__":

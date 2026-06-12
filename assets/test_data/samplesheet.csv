@@ -1,4 +1,4 @@
-run_id,barcode_id,sample_id,specimen_id,sample_type,species,sibling_species,feeding_status,collection_date,collection_time,collection_location,bioclimatic_zone,collection_region,collection_cordinates,collection_context,collection_method,specimen_sex
-RUN_TEST,barcode01,TST001,TST001,sample,Anopheles_gambiae_s.l,Anopheles_coluzzii,Blood_fed,2026-01-01,00:00,Test_site,Forest,Test_region,"0,0",Indoor,LTC,Female
-RUN_TEST,barcode95,PC,PC,positive_control,,,,,,,,,,,,
-RUN_TEST,barcode96,NC,NC,negative_control,,,,,,,,,,,,
+samplesheet_schema_version,run_id,minknow_run_folder,barcode_id,sample_id,specimen_id,sample_type,control_type,expected_host_scientific_name,expected_host_taxid,expected_marker_result,species,sibling_species,feeding_status,collection_date,collection_time,collection_location,collection_region,bioclimatic_zone,latitude,longitude,collection_context,collection_method,specimen_sex,extraction_batch,pcr_batch,library_batch,barcode_kit,flowcell,basecalling_model,notes
+1.0,RUN_TEST,20260101_TEST,barcode01,TST001,TST001,sample,none,,,,Anopheles_gambiae_s.l,Anopheles_coluzzii,Blood_fed,2026-01-01,00:00,Test_site,Test_region,Forest,0,0,Indoor,LTC,Female,EXT_TEST,PCR_TEST,LIB_TEST,SQK-RBK114-96,R10.4.1,r1041_e82_400bps_sup_v4.3.0,synthetic sample fixture
+1.0,RUN_TEST,20260101_TEST,barcode95,PC,PC,positive_control,single_host_positive,Homo sapiens,9606,all_markers,,,,,,,,,,,,,,EXT_TEST,PCR_TEST,LIB_TEST,SQK-RBK114-96,R10.4.1,r1041_e82_400bps_sup_v4.3.0,synthetic positive control fixture
+1.0,RUN_TEST,20260101_TEST,barcode96,NC,NC,negative_control,pcr_negative,,,,,,,,,,,,,,,,,EXT_TEST,PCR_TEST,LIB_TEST,SQK-RBK114-96,R10.4.1,r1041_e82_400bps_sup_v4.3.0,synthetic negative control fixture
