@@ -1,0 +1,26 @@
+priority	group	scientific_name	common_name	ncbi_taxid	accession	markers_needed	ghana_relevance	status	notes
+1	domestic	Homo sapiens	Human	9606	NC_012920.1	cyt_b,co1_short,co1_long	control/current_panel	ready	
+1	domestic	Bos taurus	Cattle	9913	NC_006853.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Bos indicus	Zebu Cattle	9915	NC_005971.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Capra hircus	Goat	9925	NC_005044.2	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Ovis aries	Sheep	9940	NC_001941.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Sus scrofa	Pig	9823	NC_000845.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Gallus gallus	Chicken	9031	AP003317.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Numida meleagris	Guinea fowl	8996	NC_034374.1	cyt_b,co1_short,co1_long	common_livestock/current_panel	ready	
+1	domestic	Anas platyrhynchos	Domestic Duck	8839	NC_009684.1	cyt_b,co1_short,co1_long	peridomestic/current_panel	ready	
+1	peridomestic	Canis lupus familiaris	Dog	9615	NC_002008.4	cyt_b,co1_short,co1_long	peridomestic/current_panel	ready	
+1	peridomestic	Felis catus	Cat	9685	NC_001700.1	cyt_b,co1_short,co1_long	peridomestic/current_panel	ready	
+1	peridomestic	Equus asinus	Donkey	9793	NC_001788.1	cyt_b,co1_short,co1_long	common_transport/current_panel	ready	
+2	peridomestic	Equus caballus	Horse	9796	NC_001640.1	cyt_b,co1_short,co1_long	possible_host/current_panel	ready	
+2	peridomestic	Mus musculus	Mouse	10090	NC_005089.1	cyt_b,co1_short,co1_long	peridomestic_rodent/current_panel	ready	
+2	peridomestic	Rattus norvegicus	Rat	10116	NC_001665.2	cyt_b,co1_short,co1_long	peridomestic_rodent/current_panel	ready	
+2	peridomestic	Mastomys natalensis	Natal Multimammate Rat	10112	NC_036995.1	cyt_b,co1_short,co1_long	West_African_rodent/current_panel	ready	
+2	peridomestic	Arvicanthis niloticus	Nile Grass Rat	61156	CM022273.1	cyt_b,co1_short,co1_long	West_African_rodent/current_panel	ready	
+2	peridomestic	Passer domesticus	House Sparrow	48849	NC_025611.1	cyt_b,co1_short,co1_long	peridomestic_bird/current_panel	ready	
+2	peridomestic	Columba livia	Rock Pigeon	8932	NC_013978.1	cyt_b,co1_short,co1_long	peridomestic_bird/current_panel	ready	
+2	sylvatic	Phacochoerus africanus	Common Warthog	41426	NC_008830.1	cyt_b,co1_short,co1_long	possible_wild_host/current_panel	ready	
+3	sylvatic	Cercopithecus mona	Mona monkey	36225		cyt_b,co1_short,co1_long	possible_wild_host	needs_accession	add accession, checksum, and provenance before inclusion
+3	sylvatic	Erythrocebus patas	Patas monkey	9538		cyt_b,co1_short,co1_long	possible_wild_host	needs_accession	add accession, checksum, and provenance before inclusion
+3	sylvatic	Kobus kob	Western kob	9962		cyt_b,co1_short,co1_long	possible_wild_host	needs_accession	add accession, checksum, and provenance before inclusion
+3	sylvatic	Tragelaphus scriptus	Bushbuck	9948		cyt_b,co1_short,co1_long	possible_wild_host	needs_accession	add accession, checksum, and provenance before inclusion
+3	sylvatic	Varanus niloticus	Nile monitor	62088		cyt_b,co1_short,co1_long	possible_reptile_host	needs_accession	add accession, checksum, and provenance before inclusion

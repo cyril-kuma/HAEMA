@@ -1,0 +1,4 @@
+run_id,barcode_id,sample_id,specimen_id,sample_type,species,sibling_species,feeding_status,collection_date,collection_time,collection_location,bioclimatic_zone,collection_region,collection_cordinates,collection_context,collection_method,specimen_sex
+RUN_TEST,barcode01,TST001,TST001,sample,Anopheles_gambiae_s.l,Anopheles_coluzzii,Blood_fed,2026-01-01,00:00,Test_site,Forest,Test_region,"0,0",Indoor,LTC,Female
+RUN_TEST,barcode95,PC,PC,positive_control,,,,,,,,,,,,
+RUN_TEST,barcode96,NC,NC,negative_control,,,,,,,,,,,,

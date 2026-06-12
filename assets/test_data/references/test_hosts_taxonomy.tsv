@@ -1,0 +1,3 @@
+seqid	taxid	scientific_name	rank	common_name	source_accession	provenance
+Human_test_host|test_reference|synthetic	9606	Homo sapiens	species	human	synthetic	test
+Cattle_test_host|test_reference|synthetic	9913	Bos taurus	species	cattle	synthetic	test

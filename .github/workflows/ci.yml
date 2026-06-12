@@ -1,0 +1,71 @@
+name: CI
+
+# Smoke-tests the pipeline on the bundled example data. Docker is preinstalled on
+# GitHub-hosted Ubuntu runners, so no external data or registry credentials are needed.
+
+on:
+  push:
+    branches: [main, dev]
+  pull_request:
+    branches: [main, dev]
+
+jobs:
+  test:
+    name: Run pipeline (test profile)
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        NXF_VER: ["24.10.0", "latest-stable"]
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Install Nextflow ${{ matrix.NXF_VER }}
+        uses: nf-core/setup-nextflow@v2
+        with:
+          version: ${{ matrix.NXF_VER }}
+
+      - name: Static checks (python, schema, refs, validation unit tests)
+        run: |
+          python3 -m py_compile bin/*.py tests/*.py
+          python3 -c "import json; json.load(open('nextflow_schema.json'))"
+          python3 bin/verify_reference_assets.py --assets-dir assets/references
+          python3 tests/test_validation.py
+          python3 tests/test_positive_controls.py
+          python3 tests/test_lca.py
+          python3 tests/test_taxid_assignment.py
+
+      - name: Validate config (all profiles)
+        run: |
+          for p in test local docker singularity apptainer slurm gpu production; do
+            nextflow config . -profile "$p" >/dev/null
+          done
+
+      - name: Fail-fast on missing required inputs
+        run: |
+          out="$(nextflow run . --outdir /tmp/ff 2>&1 || true)"
+          echo "$out" | grep -q "Missing --input"
+
+      - name: Stub run (whole-DAG plumbing, all features on)
+        run: |
+          nextflow run . -profile test,docker -stub-run \
+            --skip_taxonomy false --enable_medaka true --medaka_container python:3.11 \
+            --enable_r_outputs true --enable_multiqc true --multiqc_container python:3.11 \
+            --blast_container python:3.11 \
+            --outdir results/stub --log_dir logs/stub
+
+      - name: Real test run (curated BLAST taxonomy)
+        run: |
+          nextflow run . -profile test,docker \
+            --skip_taxonomy false --enable_r_outputs false --enable_multiqc false \
+            --outdir results/test --log_dir logs/test
+
+      - name: Assert endpoint files and columns
+        run: python3 tests/test_endpoint_columns.py results/test

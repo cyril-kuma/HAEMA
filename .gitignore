@@ -1,0 +1,20 @@
+# Nextflow runtime
+.nextflow/
+.nextflow.log*
+work/
+results/
+logs/
+pipeline_info/
+singularity_cache/
+apptainer_cache/
+.numba_cache/
+
+# OS / editor
+.DS_Store
+*.swp
+__pycache__/
+*.pyc
+
+# Local overrides / secrets
+*.local.config
+params.local.yml

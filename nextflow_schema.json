@@ -1,0 +1,445 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/USER/haema/main/nextflow_schema.json",
+  "title": "H\u00c6MA Blood-Meal Metabarcoding Pipeline Parameters",
+  "type": "object",
+  "properties": {
+    "input": {
+      "type": "string",
+      "description": "REQUIRED. Samplesheet CSV linking run_id, barcode_id, sample_id, sample_type, and collection metadata. Use -profile test for bundled demo data."
+    },
+    "primers": {
+      "type": "string",
+      "description": "Primer CSV with Gene, Forward_Primer, Reverse_Primer, and Size columns."
+    },
+    "raw_data_dir": {
+      "type": "string",
+      "description": "REQUIRED for FASTQ input. Root directory containing <run_id>/.../fastq_pass/<barcode> folders."
+    },
+    "reference_fasta": {
+      "type": "string",
+      "description": "Curated local vertebrate reference FASTA used to build the BLAST database."
+    },
+    "outdir": {
+      "type": "string",
+      "default": "<launchDir>/results",
+      "description": "Output directory."
+    },
+    "log_dir": {
+      "type": "string",
+      "default": "<launchDir>/logs",
+      "description": "Directory for Nextflow execution trace/report/timeline/DAG files."
+    },
+    "production_mode": {
+      "type": "boolean",
+      "default": false,
+      "description": "Enable strict production preflight checks for metadata, databases, taxdump, Medaka, and formal R/Bioconductor outputs."
+    },
+    "input_type": {
+      "type": "string",
+      "enum": [
+        "fastq",
+        "pooled_fastq",
+        "pod5"
+      ],
+      "default": "fastq",
+      "description": "Input data type. pooled_fastq enables optional advanced demultiplexing. POD5 is reserved for a future Dorado module."
+    },
+    "pooled_fastq": {
+      "type": "string",
+      "default": "",
+      "description": "Glob or path for pooled FASTQ input used by advanced demultiplexing."
+    },
+    "barcode_kit": {
+      "type": "string",
+      "default": "SQK-RBK114-96",
+      "description": "ONT barcode kit recorded in metadata and production preflight."
+    },
+    "flowcell": {
+      "type": "string",
+      "default": "R10.4.1",
+      "description": "ONT flowcell/chemistry recorded in metadata and run manifest."
+    },
+    "basecalling_model": {
+      "type": "string",
+      "default": "r1041_e82_400bps_sup_v4.3.0",
+      "description": "Basecalling model used to produce MinKNOW FASTQ input."
+    },
+    "demux_strategy": {
+      "type": "string",
+      "default": "pre_demultiplexed_minknow_trusted_folder",
+      "description": "Demultiplexing strategy. Production FASTQ runs trust the containing MinKNOW barcode folder."
+    },
+    "enable_advanced_demux": {
+      "type": "boolean",
+      "default": false,
+      "description": "Run optional advanced demultiplexing before input validation."
+    },
+    "advanced_demux_tool": {
+      "type": "string",
+      "enum": [
+        "header_tag",
+        "command_template",
+        "barbell",
+        "deepbinner"
+      ],
+      "default": "header_tag",
+      "description": "Advanced demultiplexing backend. command_template/barbell/deepbinner require advanced_demux_command_template."
+    },
+    "advanced_demux_command_template": {
+      "type": "string",
+      "default": "",
+      "description": "Command template for external demultiplexers. Placeholders: {input}, {input_list}, {output}, {barcode_kit}, {threads}."
+    },
+    "marker_windows": {
+      "type": "string",
+      "default": "",
+      "description": "Optional comma-separated marker:min:max length windows after primer trimming. Empty means derive windows from primer CSV Size."
+    },
+    "marker_window_padding": {
+      "type": "integer",
+      "default": 75,
+      "description": "Length padding added around primer CSV Size when marker_windows is empty."
+    },
+    "min_mean_q": {
+      "type": "number",
+      "default": 20,
+      "description": "Minimum per-read mean Phred quality."
+    },
+    "min_read_length": {
+      "type": "integer",
+      "default": 100,
+      "description": "Minimum raw read length before marker splitting."
+    },
+    "primer_max_error_rate": {
+      "type": "number",
+      "default": 0.15,
+      "description": "Allowed mismatch fraction for terminal primer evidence."
+    },
+    "consensus_method": {
+      "type": "string",
+      "enum": [
+        "cluster",
+        "dereplicate"
+      ],
+      "default": "cluster",
+      "description": "Feature generation method. cluster performs greedy mixed-template-aware consensus; dereplicate keeps exact sequences."
+    },
+    "enable_mixed_denoising": {
+      "type": "boolean",
+      "default": true,
+      "description": "Run pre-consensus mixed-template denoising on marker FASTQs before consensus/ASV generation."
+    },
+    "mixed_denoise_backend": {
+      "type": "string",
+      "enum": [
+        "umap_hdbscan",
+        "greedy",
+        "rambo_external",
+        "none"
+      ],
+      "default": "umap_hdbscan",
+      "description": "Backend for pre-consensus mixed-template separation. UMAP/HDBSCAN falls back to greedy when allowed."
+    },
+    "mixed_denoise_kmer_size": {
+      "type": "integer",
+      "default": 5,
+      "description": "k-mer size used for UMAP/HDBSCAN read vectors."
+    },
+    "mixed_denoise_min_cluster_size": {
+      "type": "integer",
+      "default": 20,
+      "description": "Minimum reads retained per denoised template cluster."
+    },
+    "mixed_denoise_min_cluster_fraction": {
+      "type": "number",
+      "default": 0.05,
+      "description": "Minimum sample/marker read fraction retained per denoised template cluster."
+    },
+    "mixed_denoise_min_reads_for_umap": {
+      "type": "integer",
+      "default": 50,
+      "description": "Minimum reads required before attempting UMAP/HDBSCAN; smaller groups use fallback when enabled."
+    },
+    "mixed_denoise_allow_greedy_fallback": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow deterministic greedy clustering when UMAP/HDBSCAN or rambo_external is unavailable."
+    },
+    "min_cluster_identity": {
+      "type": "number",
+      "default": 0.97,
+      "description": "Minimum approximate identity for assigning a read to an existing cluster when consensus_method is cluster."
+    },
+    "enable_medaka": {
+      "type": "boolean",
+      "default": false,
+      "description": "Polish retained consensus/ASV FASTA with Medaka before taxonomy."
+    },
+    "medaka_model": {
+      "type": "string",
+      "default": "r1041_e82_400bps_sup_v4.3.0",
+      "description": "Medaka model for ONT R10.4.1 SUP data. Override to match the installed Medaka model list."
+    },
+    "skip_taxonomy": {
+      "type": "boolean",
+      "default": false,
+      "description": "Skip BLAST and emit explicit unassigned taxonomy rows."
+    },
+    "taxonomy_strategy": {
+      "type": "string",
+      "enum": [
+        "curated_then_fallback",
+        "curated_only",
+        "nt_only"
+      ],
+      "default": "curated_then_fallback",
+      "description": "Taxonomy strategy. curated_then_fallback queries the curated reference first and uses an external database only for unresolved features."
+    },
+    "blast_db": {
+      "type": "string",
+      "default": "",
+      "description": "External BLAST database prefix used when taxonomy_strategy is nt_only."
+    },
+    "fallback_blast_db": {
+      "type": "string",
+      "default": "",
+      "description": "External BLAST database prefix used as fallback after the curated panel, for example /path/to/blast_db/nt/nt."
+    },
+    "blast_db_mount": {
+      "type": "string",
+      "default": "",
+      "description": "Host directory to mount read-only into Docker so external BLAST database prefixes are visible inside containers."
+    },
+    "blast_extra_args": {
+      "type": "string",
+      "default": "",
+      "description": "Additional arguments passed to blastn."
+    },
+    "taxonomy_assignment_method": {
+      "type": "string",
+      "enum": [
+        "conservative_lca",
+        "taxid_lca",
+        "top_hit"
+      ],
+      "default": "conservative_lca",
+      "description": "Taxonomy assignment method. Taxid LCA requires taxdump_dir and BLAST staxids; otherwise the parser falls back to conservative top-hit/genus logic."
+    },
+    "taxdump_dir": {
+      "type": "string",
+      "default": "",
+      "description": "Optional directory containing NCBI nodes.dmp and names.dmp for taxid-backed LCA."
+    },
+    "curated_reference_metadata": {
+      "type": "string",
+      "default": "",
+      "description": "Optional CSV/TSV sidecar for curated reference records with seqid, taxid, scientific_name, rank, and provenance."
+    },
+    "reference_targets": {
+      "type": "string",
+      "default": "../references/ghana_west_africa_reference_targets.tsv",
+      "description": "Ghana/West African accession-driven reference target manifest used by production preflight and panel-building checks."
+    },
+    "require_curated_taxids": {
+      "type": "boolean",
+      "default": false,
+      "description": "Fail curated-panel taxonomy if any FASTA record lacks valid taxid metadata."
+    },
+    "require_taxdump_for_lca": {
+      "type": "boolean",
+      "default": false,
+      "description": "Fail LCA mode unless taxdump_dir contains NCBI taxonomy files."
+    },
+    "enable_rambo_model": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate RAMBO-style mixed-host evidence and host-call tables from feature-level assignments."
+    },
+    "rambo_min_host_reads": {
+      "type": "integer",
+      "default": 3,
+      "description": "Minimum host-level reads per sample/marker for the RAMBO-style host-call table."
+    },
+    "rambo_min_host_fraction": {
+      "type": "number",
+      "default": 0.01,
+      "description": "Minimum host-level fraction per sample/marker for the RAMBO-style host-call table."
+    },
+    "enable_r_outputs": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate bloodmeal_ecology_data.rds and background-threshold tables with R."
+    },
+    "enable_phyloseq": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate bloodmeal_phyloseq.rds. Uses formal phyloseq if installed, otherwise a fallback object unless strict_bioconductor is true."
+    },
+    "enable_decontam": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate decontam_results.tsv. Uses formal decontam if installed, otherwise a negative-control prevalence fallback unless strict_bioconductor is true."
+    },
+    "strict_bioconductor": {
+      "type": "boolean",
+      "default": false,
+      "description": "Fail if formal phyloseq/decontam packages are unavailable when those outputs are enabled."
+    },
+    "decontam_threshold": {
+      "type": "number",
+      "default": 0.5,
+      "description": "Threshold for decontam prevalence or fallback negative-control prevalence calls."
+    },
+    "enable_multiqc": {
+      "type": "boolean",
+      "default": true,
+      "description": "Generate a MultiQC report when native logs are available."
+    },
+    "strict_barcode_filenames": {
+      "type": "boolean",
+      "default": false,
+      "description": "Fail validation when barcode IDs in FASTQ filenames disagree with containing barcode folders."
+    },
+    "fastq_extensions": {
+      "type": "string",
+      "default": ".fastq.gz,.fq.gz,.fastq,.fq",
+      "description": "Comma-separated FASTQ file extensions recognised during input validation."
+    },
+    "require_fastqs": {
+      "type": "boolean",
+      "default": true,
+      "description": "Fail validation when a samplesheet sample has no matching FASTQ files."
+    },
+    "strict_metadata": {
+      "type": "boolean",
+      "default": false,
+      "description": "Require the richer MIEM/MIMARKS metadata fields (enabled by the production profile)."
+    },
+    "advanced_demux_min_reads_per_barcode": {
+      "type": "integer",
+      "default": 1,
+      "description": "Minimum reads a barcode must yield to be retained by the header_tag advanced demultiplexer."
+    },
+    "demux_run_id": {
+      "type": "string",
+      "default": "ADVANCED_DEMUX",
+      "description": "Run identifier assigned to the synthetic MinKNOW-like tree produced by advanced demultiplexing."
+    },
+    "primer_search_window": {
+      "type": "integer",
+      "default": 90,
+      "description": "Window (bp) at each read terminus searched for primer evidence during trim/split."
+    },
+    "allow_length_fallback": {
+      "type": "boolean",
+      "default": true,
+      "description": "Allow marker assignment by amplicon length window when primer evidence is absent."
+    },
+    "min_asv_reads": {
+      "type": "integer",
+      "default": 3,
+      "description": "Minimum reads supporting a feature (ASV/consensus) for it to be retained."
+    },
+    "min_asv_fraction": {
+      "type": "number",
+      "default": 0.01,
+      "description": "Minimum sample/marker read fraction for a feature to be retained."
+    },
+    "medaka_extra_args": {
+      "type": "string",
+      "default": "",
+      "description": "Additional arguments passed to medaka_consensus."
+    },
+    "blast_max_target_seqs": {
+      "type": "integer",
+      "default": 10,
+      "description": "max_target_seqs passed to blastn."
+    },
+    "blast_evalue": {
+      "type": "string",
+      "default": "1e-20",
+      "description": "E-value threshold passed to blastn."
+    },
+    "reference_db_label": {
+      "type": "string",
+      "default": "curated_panel",
+      "description": "Source label recorded for assignments from the curated local panel."
+    },
+    "blast_db_label": {
+      "type": "string",
+      "default": "external_blast",
+      "description": "Source label recorded for assignments from the external nt-only BLAST database."
+    },
+    "fallback_blast_db_label": {
+      "type": "string",
+      "default": "nt",
+      "description": "Source label recorded for assignments from the fallback BLAST database."
+    },
+    "min_blast_identity": {
+      "type": "number",
+      "default": 97.0,
+      "description": "Minimum percent identity for a BLAST hit to support an assignment."
+    },
+    "min_blast_coverage": {
+      "type": "number",
+      "default": 80.0,
+      "description": "Minimum query coverage percent for a BLAST hit to support an assignment."
+    },
+    "top_bitscore_delta": {
+      "type": "number",
+      "default": 2.0,
+      "description": "Bit-score window within which competing hits are treated as ties for conservative LCA."
+    },
+    "negative_control_multiplier": {
+      "type": "number",
+      "default": 1.0,
+      "description": "Scaling factor applied to negative-control-derived background thresholds during aggregation."
+    },
+    "rambo_include_contaminants": {
+      "type": "boolean",
+      "default": false,
+      "description": "Include contamination-flagged features in the RAMBO-style host-call evidence."
+    },
+    "cleanup": {
+      "type": "boolean",
+      "default": false,
+      "description": "Delete each task work directory on successful completion. Saves disk but disables -resume."
+    },
+    "python_container": {
+      "type": "string",
+      "default": "python:3.11@sha256:0c3b4dde908ad46418559b4b713a877d535e5d9b7113f5cc80163e31ed32771e",
+      "description": "Default Python container (digest-pinned full image; full not -slim because Nextflow needs procps/ps). Production profile overrides with haema-python:0.3.0 for UMAP/HDBSCAN dependencies."
+    },
+    "blast_container": {
+      "type": "string",
+      "default": "quay.io/biocontainers/blast:2.16.0--hc155240_3@sha256:44d9d07f8cf90fe722013f4fbe0230f3013f49ff7f8432b3ba1e8563b81733eb",
+      "description": "BLAST container (digest-pinned BioContainer) used for makeblastdb and blastn."
+    },
+    "advanced_demux_container": {
+      "type": "string",
+      "default": "python:3.11-slim-bookworm@sha256:e2d3af735aff6eeee600b1933bedd99da6645fedf572cc12ef4cc1331f2ceebe",
+      "description": "Container (digest-pinned) used by the built-in pooled FASTQ header-tag demultiplexing wrapper."
+    },
+    "medaka_container": {
+      "type": "string",
+      "default": "ontresearch/medaka:shaf39439188c323053e66cf79618fae1ab33d1b38a",
+      "description": "Medaka container pinned to an immutable upstream sha-tag (never :latest). The required model is verified at runtime by MEDAKA_MODEL_PREFLIGHT."
+    },
+    "r_container": {
+      "type": "string",
+      "default": "rocker/r-ver:4.4.2@sha256:df26749182af64d5263bf64149d51a427b476ed28c4e046997143be3f97fdd7c",
+      "description": "R container (digest-pinned) for fallback ecology outputs. Production profile overrides with haema-r:0.3.0 for formal phyloseq/decontam."
+    },
+    "multiqc_container": {
+      "type": "string",
+      "default": "multiqc/multiqc:v1.25@sha256:ad08efaedd4e31b860edf05d058ff16178692924b1b0e74ed1db387ce3ba0ffd",
+      "description": "MultiQC container (digest-pinned) used when --enable_multiqc true."
+    }
+  },
+  "required": [
+    "input",
+    "raw_data_dir"
+  ],
+  "description": "Parameters for the H\u00c6MA ONT blood-meal metabarcoding pipeline."
+}

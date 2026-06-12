@@ -1,0 +1,29 @@
+cff-version: 1.2.0
+message: "If you use this pipeline, please cite it using these metadata."
+title: "HÆMA: a reproducible Nextflow pipeline for Oxford Nanopore multi-marker metabarcoding of Anopheles gambiae s.l. blood meals"
+abstract: >-
+  HÆMA is a containerised, DSL2 Nextflow pipeline for identifying complete vertebrate
+  host assemblages from Anopheles gambiae s.l. blood meals using Oxford Nanopore R10.4.1
+  multi-marker (cyt b, short COI, long COI) amplicon data. It performs metadata validation,
+  marker-aware primer trimming and QC, UMAP/HDBSCAN mixed-template denoising, consensus
+  generation, curated local-first BLAST taxonomy with a conservative LCA, control-aware
+  contamination assessment, and phyloseq-ready ecological endpoints.
+type: software
+authors:
+  - given-names: Cyril
+    family-names: Kuma
+    # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: add your ORCID
+    # affiliation: "TODO: add your institution"
+version: 0.2.0
+date-released: "2026-06-12"
+license: MIT
+keywords:
+  - metabarcoding
+  - Oxford Nanopore
+  - blood meal
+  - Anopheles gambiae
+  - Nextflow
+  - malaria
+  - vector ecology
+repository-code: "https://github.com/USER/haema"   # TODO: set to the public repository URL
+# doi: "10.5281/zenodo.XXXXXXX"                       # TODO: add a Zenodo DOI on release

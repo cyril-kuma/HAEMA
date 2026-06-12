@@ -1,0 +1,21 @@
+seqid	taxid	scientific_name	rank	common_name	source_accession	source_db	retrieval_date	provenance	sequence_md5
+Bos_taurus|NC_006853.1|mitochondrion|complete_genome|Cattle	9913	Bos taurus	species	Cattle	NC_006853.1	GenBank	2026-06-10	manual_curated_current_panel	e3c18324cb5221eee141fd6f1028a351
+Canis_lupus_familiaris|NC_002008.4|mitochondrion|complete_genome|Dog	9615	Canis lupus familiaris	subspecies	Dog	NC_002008.4	GenBank	2026-06-10	manual_curated_current_panel	f7d0daed161cd98504d46f25ab53a038
+Capra_hircus|NC_005044.2|mitochondrion|complete_genome|Goat	9925	Capra hircus	species	Goat	NC_005044.2	GenBank	2026-06-10	manual_curated_current_panel	f5e135f2ddbee10e462af961b4a5053c
+Felis_catus|NC_001700.1|mitochondrion|complete_genome|Cat	9685	Felis catus	species	Cat	NC_001700.1	GenBank	2026-06-10	manual_curated_current_panel	1770a5b3bbdc2ffbe41ea13098f12575
+Gallus_gallus|AP003317.1|mitochondrion|complete_genome|Chicken	9031	Gallus gallus	species	Chicken	AP003317.1	GenBank	2026-06-10	manual_curated_current_panel	9363f59327b674f66ec23bfd9d388903
+Homo_sapiens|NC_012920.1|mitochondrion|complete_genome|Human	9606	Homo sapiens	species	Human	NC_012920.1	GenBank	2026-06-10	manual_curated_current_panel	c68f52674c9fb33aef52dcf399755519
+Mus_musculus|NC_005089.1|mitochondrion|complete_genome|Mouse	10090	Mus musculus	species	Mouse	NC_005089.1	GenBank	2026-06-10	manual_curated_current_panel	11c8af2a2528b25f2c080ab7da42edda
+Ovis_aries|NC_001941.1|mitochondrion|complete_genome|Sheep	9940	Ovis aries	species	Sheep	NC_001941.1	GenBank	2026-06-10	manual_curated_current_panel	3fa0d3aedc431122e96f1df13ed4411d
+Passer_domesticus|NC_025611.1|mitochondrion|complete_genome|House_Sparrow	48849	Passer domesticus	species	House Sparrow	NC_025611.1	GenBank	2026-06-10	manual_curated_current_panel	60aa3660963cf9c601d0c76e5530db85
+Rattus_norvegicus|NC_001665.2|mitochondrion|complete_genome|Rat	10116	Rattus norvegicus	species	Rat	NC_001665.2	GenBank	2026-06-10	manual_curated_current_panel	817c23329620973af522ca16a9685e48
+Sus_scrofa|NC_000845.1|mitochondrion|complete_genome|Pig	9823	Sus scrofa	species	Pig	NC_000845.1	GenBank	2026-06-10	manual_curated_current_panel	8401891f01996eeeaf8fa3b710dfed4b
+Equus_asinus|NC_001788.1|mitochondrion|complete_genome|Donkey	9793	Equus asinus	species	Donkey	NC_001788.1	GenBank	2026-06-10	manual_curated_current_panel	3aad735fee9d0241016e12e2f4e3af2c
+Bos_indicus|NC_005971.1|mitochondrion|complete_genome|Zebu_Cattle	9915	Bos indicus	species	Zebu Cattle	NC_005971.1	GenBank	2026-06-10	manual_curated_current_panel	9a9954fb178014b759a71b39e39f6d7b
+Equus_caballus|NC_001640.1|mitochondrion|complete_genome|Horse	9796	Equus caballus	species	Horse	NC_001640.1	GenBank	2026-06-10	manual_curated_current_panel	732d956b0927aa063007fb18c839890a
+Columba_livia|NC_013978.1|mitochondrion|complete_genome|Rock_Pigeon	8932	Columba livia	species	Rock Pigeon	NC_013978.1	GenBank	2026-06-10	manual_curated_current_panel	05da586a78ce0c00f921ae90382dba43
+Anas_platyrhynchos|NC_009684.1|mitochondrion|complete_genome|Domestic_Duck	8839	Anas platyrhynchos	species	Domestic Duck	NC_009684.1	GenBank	2026-06-10	manual_curated_current_panel	512afa5dcec819f6db2012f9da550093
+Mastomys_natalensis|NC_036995.1|mitochondrion|complete_genome|Natal_Multimammate_Rat	10112	Mastomys natalensis	species	Natal Multimammate Rat	NC_036995.1	GenBank	2026-06-10	manual_curated_current_panel	9497d1861c0fa490f031b1d0a3bca2ab
+Arvicanthis_niloticus|CM022273.1|mitochondrion|complete_genome|Nile_Grass_Rat	61156	Arvicanthis niloticus	species	Nile Grass Rat	CM022273.1	GenBank	2026-06-10	manual_curated_current_panel	508cd345afe41e5b0310b9f713d4cf95
+Phacochoerus_africanus|NC_008830.1|mitochondrion|complete_genome|Common_Warthog	41426	Phacochoerus africanus	species	Common Warthog	NC_008830.1	GenBank	2026-06-10	manual_curated_current_panel	b627e5f2704c1d139fe812fb1e2b1147
+Numida_meleagris|NC_034374.1|mitochondrion|complete_genome|Guinea_fowl	8996	Numida meleagris	species	Guinea fowl	NC_034374.1	GenBank	2026-06-10	manual_curated_current_panel	6bbba35bd05ca21ffa7912cdbc68812a
