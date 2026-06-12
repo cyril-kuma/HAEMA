@@ -37,8 +37,14 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   convention, and a release checklist under `docs/`.
 
 ### Changed
-- `nextflow run . --help` prints usage, required inputs, profiles, and the opt-in feature gates;
-  every run now logs a "Feature gates" line so default on/off states are visible at a glance.
+- **Schema-based parameter validation and grouped `--help`** via the pinned `nf-schema@2.2.0`
+  plugin: `nextflow run . --help [group]` lists parameters by category, every run validates flags
+  against `nextflow_schema.json` (mistyped params are flagged), and prints a non-default parameter
+  summary. The schema is reorganised into documented groups.
+- Single source of truth for reference assets: removed duplicate copies of the reference panel,
+  primers, and samplesheet template from the project root and within `assets/`; all bundled data
+  now lives only under `assets/`.
+- Every run logs a "Feature gates" line so default on/off states are visible at a glance.
 - `haema-r` image build hardened to use a reliable CRAN mirror (`cloud.r-project.org`) with a
   longer timeout, fixing intermittent `SSL connect error` failures; both custom images build and
   self-test their imports.

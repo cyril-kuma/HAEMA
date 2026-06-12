@@ -69,14 +69,18 @@ downloads, or edits required** beyond pulling one small public container.
 ```bash
 git clone <repository-url> haema && cd haema
 
-nextflow run . --help          # usage, required inputs, profiles, and the opt-in feature gates
+nextflow run . --help            # all parameters, grouped by category (schema-driven)
+nextflow run . --help taxonomy   # drill into one group
 
 # ~1 minute. Validates your install end to end (curated BLAST taxonomy on demo hosts).
 nextflow run . -profile test,docker --skip_taxonomy false --outdir results/test
 ```
 
-Every run prints a **Feature gates** line showing which optional steps are on/off, so the
-defaults are never a mystery (see [docs/parameters.md](docs/parameters.md#why-some-defaults-are-false)).
+Parameters are **validated against the schema on every run** (via the pinned `nf-schema` plugin),
+so a mistyped flag is flagged rather than silently ignored. Every run also prints a **Feature
+gates** line showing which optional steps are on/off, so the defaults are never a mystery
+(see [docs/parameters.md](docs/parameters.md#why-some-defaults-are-false)). The plugin is fetched
+once and cached; pre-stage it for offline use (see [docs/reproducibility.md](docs/reproducibility.md)).
 
 You should see `Execution complete` and these files appear:
 

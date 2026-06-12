@@ -20,40 +20,14 @@ include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
 include { BUILD_RUN_MANIFEST } from './modules/local/run_manifest/main.nf'
 
-def helpMessage() {
-    log.info """
-    ============================================================================
-     HÆMA — ONT blood-meal metabarcoding pipeline  v${workflow.manifest.version ?: 'dev'}
-    ============================================================================
-    First run (bundled demo, no data needed):
-      nextflow run . -profile test,docker --skip_taxonomy false --outdir results/test
-
-    Real run:
-      nextflow run . -profile local \\
-        --input <samplesheet.csv> --raw_data_dir <Runs/> \\
-        --python_container haema-python:0.3.0 --outdir results/run
-
-    Required:   --input <csv>   --raw_data_dir <dir>   (use absolute paths)
-    Profiles:   test | local | docker | singularity | apptainer | slurm | gpu | production
-                (combine, e.g. -profile test,docker)
-
-    Optional gates are OFF by default until you opt in (see docs/parameters.md "Why … false"):
-      --skip_taxonomy false        run curated BLAST taxonomy (test profile skips it for speed)
-      --enable_medaka true         Medaka consensus polishing (needs a Medaka image + model)
-      --enable_advanced_demux true pooled-FASTQ demultiplexing (needs --pooled_fastq)
-      --taxonomy_strategy ...       curated_only | curated_then_fallback | nt_only
-      -profile production           strict metadata + custom images + full feature set
-
-    Full reference: nextflow_schema.json · docs/parameters.md · docs/usage.md
-    ============================================================================
-    """.stripIndent()
-}
+// Schema-based validation, grouped --help, and a run-parameter summary (nf-schema plugin).
+include { validateParameters; paramsSummaryLog } from 'plugin/nf-schema'
 
 workflow {
-    if (params.help) {
-        helpMessage()
-        return
-    }
+    // Catch unknown/misspelled/mistyped parameters against nextflow_schema.json before doing work.
+    // (--help is handled automatically by nf-schema via the validation.help config.)
+    validateParameters()
+    log.info paramsSummaryLog(workflow)
 
     log.info "HÆMA blood-meal metabarcoding pipeline v${workflow.manifest.version ?: 'dev'}"
     log.info "Input mode        : ${params.input_type}"

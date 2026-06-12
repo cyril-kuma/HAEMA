@@ -5,6 +5,11 @@ Every parameter is documented with type and default in
 (`--param value`) or with a `-params-file params.yml`. This page summarises the ones you are most
 likely to set.
 
+> **Discover & validate from the CLI:** `nextflow run . --help` prints all parameters grouped by
+> category; `nextflow run . --help taxonomy` (or any group) drills in. Parameters are validated
+> against the schema on every run (via the `nf-schema` plugin), so a mistyped flag like `--inputt`
+> is flagged with a clear warning instead of being silently ignored.
+
 ## Inputs (required / core)
 | Parameter | Default | Description |
 |---|---|---|

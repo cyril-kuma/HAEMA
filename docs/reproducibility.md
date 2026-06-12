@@ -6,6 +6,9 @@ produce identical results on any machine with Nextflow and a container engine.
 ## What is pinned
 - **Nextflow engine** — pin with `export NXF_VER=24.10.0` (the version this release was tested on).
 - **Pipeline revision** — clone a tagged release, or `nextflow run <repo> -r <tag>`.
+- **Plugins** — `nf-schema@2.2.0` is version-pinned in `nextflow.config` (parameter validation +
+  `--help`). It is downloaded once and cached; for offline/air-gapped runs pre-stage it with
+  `nextflow plugin install nf-schema@2.2.0` or point `NXF_PLUGINS_DIR` at a shared cache.
 - **Containers** — every public image is referenced by an immutable `@sha256:` digest (and the
   Medaka image by an immutable upstream sha-tag) in `nextflow.config`; nothing uses `:latest`.
   The two custom images (`haema-python`, `haema-r`) pin their base by digest and every package
