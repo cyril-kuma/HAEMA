@@ -13,6 +13,12 @@ Every image is pinned to an immutable reference (an `@sha256:` digest, or for `o
 an immutable upstream `sha…` build tag) so that the same bytes are pulled on every machine and at
 every future date. `:latest` and floating minor tags are not used anywhere.
 
+> **On version numbers:** the custom images (`haema-python:0.3.0`, `haema-r:0.3.0`) are versioned
+> **independently** of the pipeline (`0.2.0`). The image tag tracks changes to that image's
+> dependency stack (it was bumped 0.2.0→0.3.0 when the bases were digest-pinned and `procps`/repo
+> hardening were added), not the pipeline release. For publication, push the images to a registry
+> and pin them by `@sha256:` digest, after which the tag is only a human label.
+
 ## Current Images
 
 | Scope | Image | Type | Why |
