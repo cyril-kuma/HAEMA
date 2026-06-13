@@ -56,6 +56,9 @@ def main():
             "blast_db": parameters.get("blast_db", ""),
             "fallback_blast_db": parameters.get("fallback_blast_db", ""),
             "taxdump_dir": parameters.get("taxdump_dir", ""),
+            # Content hashes of the resolved reference assets (computed host-side at run time), so a
+            # run is reproducible/auditable even if the panel or sidecar is edited or overridden.
+            "reference_checksums_sha256": parameters.get("reference_checksums_sha256", {}),
         },
         "outputs": outputs,
         "input_validation": read_json(args.input_validation_report),

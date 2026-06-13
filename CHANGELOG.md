@@ -6,6 +6,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
+_No unreleased changes yet._
+
+## [0.2.0] - 2026-06-13
+
 ### Added
 - Self-contained repository: curated reference panel, taxonomy sidecar, target manifest,
   and primer file are now vendored under `assets/` so a fresh clone runs `-profile test`
@@ -69,6 +73,12 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 - Removed dead parameters (`allow_remote_blast`, `expected_positive_hosts`) and wired the
   previously-inert `cleanup` parameter to Nextflow's `cleanup` directive.
 - `nextflow_schema.json` synced with all parameters.
+- Multi-dimensional audit pass: `run_manifest.json` now records sha256 content hashes of the
+  resolved reference assets (provenance); a runtime WARNING fires when `*_lca` is requested without
+  a `--taxdump_dir` (ambiguous hits then collapse by defline genus, not taxid lineage); the
+  taxonomy-skipped path emits the same column schema as the BLAST path; removed a dead `start`
+  branch in `fastq_utils`; renamed the merge stat `mean_q`→`mean_read_q` (unweighted per-read mean);
+  fixed the stale `homePage` and `.git`/checklist items.
 
 ## [0.1.0] - 2026-06-09
 

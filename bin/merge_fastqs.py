@@ -48,7 +48,7 @@ def main():
             "min_len",
             "max_len",
             "mean_len",
-            "mean_q",
+            "mean_read_q",
         ]
         writer = csv.DictWriter(handle, fieldnames=fieldnames, delimiter="\t")
         writer.writeheader()
@@ -64,7 +64,8 @@ def main():
                 "min_len": min_len or 0,
                 "max_len": max_len,
                 "mean_len": f"{mean_len:.2f}",
-                "mean_q": f"{mean_quality:.2f}",
+                # Unweighted mean of per-read mean Phred scores (not base-weighted); named explicitly.
+                "mean_read_q": f"{mean_quality:.2f}",
             }
         )
 

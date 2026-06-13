@@ -52,8 +52,12 @@ defensibility**.
    taxids**, so `--taxonomy_assignment_method taxid_lca --taxdump_dir <dir>` performs genuine
    taxdump-backed lowest-common-ancestor assignment against the curated panel (verified by
    `tests/test_taxid_assignment.py`; the `nt` fallback supplies its own native `staxids`).
-   Re-keying the panel to accession seqids is therefore **not required** for taxid-LCA. *Remaining:*
-   a frozen, version-labelled DB build and a pinned `taxdump` snapshot for full reproducibility.
+   Re-keying the panel to accession seqids is therefore **not required** for taxid-LCA.
+   **Default-path caveat:** with no `--taxdump_dir` (the default), single-taxon hits still get their
+   exact sidecar taxid, but *ambiguous multi-taxon* hits are collapsed by reference-defline **genus
+   string**, not by taxid lineage escalation — the pipeline prints a `WARNING` to this effect at
+   runtime. Supply `--taxdump_dir` (a pinned NCBI taxonomy snapshot) for true ancestor-based
+   escalation. *Remaining:* a frozen, version-labelled DB build and a bundled `taxdump` snapshot.
 
 5. **Single basecalling assumption.** Input is already-basecalled MinKNOW FASTQ (Dorado SUP,
    R10.4.1). POD5/Dorado re-basecalling and raw-signal demultiplexing are not implemented.

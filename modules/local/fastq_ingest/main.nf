@@ -34,7 +34,7 @@ process MERGE_FASTQ_CHUNKS {
     """
     cp ${fastqs[0]} ${meta.id}.merged.fastq.gz
     cat > ${meta.id}.merge_stats.tsv <<-END
-    sample_uid	run_id	sample_id	barcode_id	n_files	reads	bases	min_len	max_len	mean_len	mean_q
+    sample_uid	run_id	sample_id	barcode_id	n_files	reads	bases	min_len	max_len	mean_len	mean_read_q
     ${meta.id}	${meta.run_id}	${meta.sample_id}	${meta.barcode_id}	1	1	1	1	1	1	40
     END
     cat > versions.yml <<-END

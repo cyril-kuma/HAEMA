@@ -78,10 +78,8 @@ def best_primer_match(seq, primer, region, max_error_rate):
     if plen == 0 or len(seq) < plen:
         return None
     max_mismatches = int(plen * max_error_rate + 1e-9)
-    if region == "start":
-        start = 0
-        stop = max(0, min(len(seq) - plen, 0)) + 1
-    elif isinstance(region, tuple):
+    # region is always a (start, stop) window; callers (find_terminal_pair) pass terminal windows.
+    if isinstance(region, tuple):
         start, stop = region
         start = max(0, start)
         stop = min(len(seq) - plen, stop)

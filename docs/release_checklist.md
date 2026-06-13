@@ -12,8 +12,9 @@ Track readiness for each milestone. Checked = done in this repository; unchecked
 - [x] GitHub issue/PR templates and a CI workflow
 - [x] `docs/`: usage, parameters, output, methods, limitations, reproducibility, container strategy
 - [x] `Makefile` + `tests/validate_release.sh` one-command build/lint/release entry points
-- [ ] **`git init`** — the `.git` directory is missing; re-initialise before publishing
-- [ ] Fill `CITATION.cff` placeholders (ORCID, affiliation, repo URL, Zenodo DOI)
+- [x] Git repository initialised with commit history
+- [ ] Set the real repository URL in `CITATION.cff` (repository-code) **and** `nextflow.config` (manifest.homePage) — both currently the `USER/haema` placeholder
+- [ ] Fill remaining `CITATION.cff` placeholders (ORCID, affiliation, Zenodo DOI)
 - [ ] Push `haema-python` / `haema-r` to a public registry and pin digests (`make push REGISTRY=...`)
 - [ ] Tag a release (`v0.2.0`) and archive for a DOI (e.g. Zenodo)
 

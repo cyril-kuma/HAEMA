@@ -15,7 +15,23 @@ process BUILD_RUN_MANIFEST {
 
     script:
     def gpu_active = (workflow.profile ?: '').tokenize(',').contains('gpu')
+    // Content hashes of the resolved reference assets so two runs with different reference data are
+    // distinguishable from provenance (computed host-side; the files are not staged into the task).
+    def fileSha256 = { p ->
+        try {
+            def f = new File(p?.toString() ?: '')
+            (f.exists() && f.isFile()) ? java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString() : ''
+        } catch (Exception e) {
+            ''
+        }
+    }
+    def reference_checksums = [
+        reference_fasta: fileSha256(params.reference_fasta),
+        curated_reference_metadata: fileSha256(params.curated_reference_metadata),
+        reference_targets: fileSha256(params.reference_targets),
+    ]
     def parameters = [
+        reference_checksums_sha256: reference_checksums,
         production_mode: params.production_mode,
         input_type: params.input_type,
         barcode_kit: params.barcode_kit,

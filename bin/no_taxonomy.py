@@ -28,6 +28,8 @@ def main():
             "fallback_used",
             "primary_assignment_status",
             "assignment_method",
+            "lca_taxid",
+            "top_staxids",
         ]
         writer = csv.DictWriter(out, fieldnames=fieldnames, delimiter="\t", extrasaction="ignore")
         writer.writeheader()
@@ -51,6 +53,8 @@ def main():
                     "fallback_used": "false",
                     "primary_assignment_status": "",
                     "assignment_method": "taxonomy_disabled",
+                    "lca_taxid": "",
+                    "top_staxids": "",
                 }
             )
             writer.writerow(row)

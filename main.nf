@@ -38,6 +38,12 @@ workflow {
     log.info "Feature gates      : taxonomy=${!params.skip_taxonomy} denoise=${params.enable_mixed_denoising}(${params.mixed_denoise_backend}) " +
              "medaka=${params.enable_medaka} rambo=${params.enable_rambo_model} r_outputs=${params.enable_r_outputs} multiqc=${params.enable_multiqc}"
 
+    // Make reference-panel divergence provenance-visible (its sha256 is recorded in run_manifest.json).
+    def bundled_ref = "${projectDir}/assets/references/vertebrate_dna_ref_panel.fasta".toString()
+    if (!params.skip_taxonomy && params.reference_fasta?.toString() != bundled_ref) {
+        log.warn "Using a non-default --reference_fasta (${params.reference_fasta}); its sha256 is recorded in run_manifest.json for provenance."
+    }
+
     if (!params.input) {
         error "Missing --input samplesheet CSV (or use '-profile test' for the bundled demo; run '--help' for usage)"
     }

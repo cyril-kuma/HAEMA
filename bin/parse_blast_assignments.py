@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import csv
+import sys
 from pathlib import Path
 
 
@@ -302,6 +303,14 @@ def main():
     primary_hits = read_blast(args.blast, reference_taxonomy)
     fallback_hits = read_blast(args.fallback_blast) if args.fallback_blast else {}
     taxonomy = load_taxdump(args.taxdump_dir)
+    if args.assignment_method in {"taxid_lca", "conservative_lca"} and not taxonomy:
+        print(
+            "WARNING: no NCBI taxdump loaded (--taxdump_dir empty or missing nodes.dmp/names.dmp). "
+            "Single-taxon hits are still resolved to exact taxids from the curated sidecar, but "
+            "ambiguous multi-taxon hits are collapsed by reference-defline genus string, not by "
+            "taxid lineage. Supply --taxdump_dir for true ancestor-based LCA escalation.",
+            file=sys.stderr,
+        )
     fieldnames = [
         "sample_uid",
         "run_id",
