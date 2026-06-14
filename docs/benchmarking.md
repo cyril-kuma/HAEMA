@@ -1,9 +1,10 @@
 # Benchmarking mixed-host recovery with lab-prepared controls
 
 Lab-prepared mixed blood meals (samples assembled from **known** host DNA in the wet lab) are the
-gold-standard controls for calibrating this pipeline's mixed-template denoising. In the bundled
-Ghana dataset these are the `mf`-noted RUN01 samples (barcode34, 36, 47, 56) — they are constructed
-mixtures, not field unknowns, so their true host composition is known to the people who made them.
+gold-standard controls for calibrating this pipeline's mixed-template denoising. In the Ghana
+demonstration set these are the `mf`-noted mixed-host controls (RUN09: barcode34, 36, 47, 56) — they
+are constructed mixtures, not field unknowns, so their true host composition is known to the people
+who made them.
 
 HÆMA can now use them as an automated **recovery benchmark**: did the pipeline recover every
 declared host, and did it invent any it shouldn't have?
@@ -15,7 +16,7 @@ semicolon-separated list of the hosts that were mixed in (use accepted scientifi
 
 ```csv
 run_id,barcode_id,sample_id,sample_type,control_type,expected_host_scientific_name,notes
-LUC_MOSBMA_RUN01_20250721,barcode47,NS098,positive_control,mixed_host_positive_control,Homo sapiens;Capra hircus,lab-prepared mixture
+EXAMPLE_RUN,barcode47,MIXED_PC,positive_control,mixed_host_positive_control,Homo sapiens;Capra hircus,lab-prepared mixture
 ```
 
 > **Fill these from your lab records — do not copy the pipeline's own calls** (that would make the

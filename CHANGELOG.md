@@ -6,7 +6,33 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 
 ## [Unreleased]
 
-_No unreleased changes yet._
+### Fixed
+- **qc_summary OOM (exit 137).** The aggregated `qc_summary.tsv` no longer concatenates the per-read
+  denoise `cluster_membership` and trim `read_decisions` tables (millions of rows on real data — it
+  reached ~1 GB and OOM-killed `AGGREGATE_RESULTS`/`BUILD_R_OUTPUTS`). Only per-sample/per-marker
+  summaries are aggregated; the per-read tables remain published under `02_trimmed_filtered/qc/` and
+  `03_consensus_variants/mixed_denoising/qc/` (`main.nf`, `subworkflows/local/preprocess/main.nf`).
+
+### Changed
+- **MultiQC report is now real.** The MultiQC step exposes the per-sample and per-marker summaries as
+  MultiQC custom-content tables instead of emitting an empty "did not find native tool logs"
+  placeholder.
+- Removed the non-functional `rambo_external` value from the `mixed_denoise_backend` schema enum and
+  the dead branch in `bin/denoise_mixed_templates.py` (it never ran an external RAMBO; it silently
+  greedy-fell-back), so `--help` no longer advertises an unimplemented backend.
+- Set `manifest.homePage` (`nextflow.config`) and `repository-code` (`CITATION.cff`) to the public
+  repository URL.
+
+### Docs
+- Consolidated the docs set for public release: removed planning/internal docs
+  (`IMPLEMENTATION_PLAN.md`, `REFERENCE_PANEL_REVIEW.md`, `release_checklist.md`) and merged the
+  implemented-vs-staged tracking from `DELIBERATE_LIMITATIONS.md` into a feature-status table in
+  `limitations.md`; updated the docs index.
+- Corrected the mixed-host controls' run label (RUN01 → RUN09) in `limitations.md`/`benchmarking.md`
+  and disclosed the demonstration run's actual 50% (3/6) mixed-host recovery, including the
+  *Bos taurus* no-host-signal control, to match the pipeline's own HTML report.
+- Scrubbed real run/sample identifiers from the example samplesheet and docs (use `EXAMPLE_RUN`,
+  `SAMPLE01`, etc.).
 
 ## [0.2.0] - 2026-06-13
 

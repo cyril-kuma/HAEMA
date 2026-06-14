@@ -193,7 +193,6 @@
                     "enum": [
                         "umap_hdbscan",
                         "greedy",
-                        "rambo_external",
                         "none"
                     ],
                     "default": "umap_hdbscan",
@@ -222,7 +221,7 @@
                 "mixed_denoise_allow_greedy_fallback": {
                     "type": "boolean",
                     "default": true,
-                    "description": "Allow deterministic greedy clustering when UMAP/HDBSCAN or rambo_external is unavailable."
+                    "description": "Allow deterministic greedy clustering when UMAP/HDBSCAN is unavailable (e.g. the default python:3.11 image lacks umap-learn/hdbscan; use --python_container haema-python:0.3.0 for real UMAP)."
                 }
             }
         },

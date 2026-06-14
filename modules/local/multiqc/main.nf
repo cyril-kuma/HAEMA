@@ -3,7 +3,7 @@ process MULTIQC_REPORT {
     tag 'multiqc'
 
     publishDir "${params.outdir}/06_reports", mode: 'copy', pattern: 'multiqc_report.html'
-    publishDir "${params.outdir}/06_reports/multiqc_data", mode: 'copy', pattern: 'multiqc_data/**'
+    publishDir "${params.outdir}/06_reports", mode: 'copy', pattern: 'multiqc_data'
 
     input:
     path master_endpoint
@@ -23,25 +23,45 @@ process MULTIQC_REPORT {
     script:
     """
     mkdir -p multiqc_input
-    cp '${master_endpoint}' multiqc_input/
-    cp '${sample_summary}' multiqc_input/
-    cp '${marker_summary}' multiqc_input/
-    cp '${qc_summary}' multiqc_input/
-    cp '${contamination_flags}' multiqc_input/
+
+    # MultiQC does not natively parse HÆMA's custom TSVs, so the compact per-sample and per-marker
+    # summaries are exposed as MultiQC *custom-content* tables: a file ending in *_mqc.tsv whose
+    # first lines are a '# key: value' comment header is auto-ingested as a report section. This
+    # makes the MultiQC report a genuine overview instead of an empty placeholder. The large master
+    # endpoint and per-read qc_summary are deliberately NOT fed to MultiQC (too wide/long); they
+    # remain the primary tables under 05_endpoint_files/.
+    {
+        echo '# id: "haema_sample_summary"'
+        echo '# section_name: "HÆMA: per-sample summary"'
+        echo '# description: "Reads, retained features, and host calls per sample and control."'
+        echo '# plot_type: "table"'
+        cat '${sample_summary}'
+    } > multiqc_input/haema_sample_summary_mqc.tsv
+
+    # marker_level_summary has one row per sample/marker, so prepend a unique sample.marker key
+    # (MultiQC tables key rows on the first column).
+    {
+        echo '# id: "haema_marker_summary"'
+        echo '# section_name: "HÆMA: per-marker summary"'
+        echo '# description: "Per-sample/marker read and feature counts (cyt b / short COI / long COI)."'
+        echo '# plot_type: "table"'
+        awk -F'\\t' 'NR==1{print "sample_marker\\t"\$0} NR>1{print \$1"."\$2"\\t"\$0}' '${marker_summary}'
+    } > multiqc_input/haema_marker_summary_mqc.tsv
 
     set +e
-    multiqc \\
-        multiqc_input \\
-        --outdir . \\
-        --filename multiqc_report.html \\
-        --force
+    multiqc multiqc_input --outdir . --filename multiqc_report.html --title 'HÆMA report' --force
     status=\$?
     set -e
 
-    if [[ ! -f multiqc_report.html ]]; then
-        printf '<html><body><h1>MultiQC did not find native tool logs yet</h1><p>Status: %s</p></body></html>\\n' "\$status" > multiqc_report.html
-    fi
+    # MultiQC names its data dir after the report file; normalise it to the published 'multiqc_data'.
+    for d in multiqc_report_data multiqc_report.html_data; do
+        [ -d "\$d" ] && mv "\$d" multiqc_data
+    done
     mkdir -p multiqc_data
+
+    if [ ! -f multiqc_report.html ]; then
+        printf '<html><body><h1>HÆMA: MultiQC report</h1><p>MultiQC exited %s without producing a report; use the primary HÆMA report (bloodmeal_pipeline_report.html) and the endpoint tables under 05_endpoint_files/.</p></body></html>\\n' "\$status" > multiqc_report.html
+    fi
 
     cat > versions.yml <<-END_VERSIONS
     "${task.process}":

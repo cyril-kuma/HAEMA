@@ -78,7 +78,7 @@ denoising thresholds with it.
 ## File-naming convention
 Output files are keyed by a **compound sample UID**: `sample_uid = <run_id>__<barcode_id>__<sample_id>`,
 using a **double underscore** (`__`) between the three fields because each field may itself contain
-single underscores (e.g. `LUC_MOSBMA_RUN01_20250721`). Splitting a name on `__` unambiguously
+single underscores (e.g. `EXAMPLE_RUN_2025`). Splitting a name on `__` unambiguously
 recovers run, barcode, and sample. The marker and step are then appended with `.` (e.g.
-`LUC_MOSBMA_RUN01_20250721__barcode47__NS098.cyt_b.cluster001.consensus.fasta`). This is a
+`EXAMPLE_RUN_2025__barcode47__SAMPLE01.cyt_b.cluster001.consensus.fasta`). This is a
 deliberate, consistent scheme, not a typo.

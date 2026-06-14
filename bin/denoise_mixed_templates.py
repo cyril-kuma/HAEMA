@@ -151,13 +151,6 @@ def main():
         backend_used = "none_single_cluster"
     elif backend_requested == "greedy":
         labels, backend_used = greedy_labels(records, args.greedy_min_identity)
-    elif backend_requested == "rambo_external":
-        if not allow_fallback:
-            raise SystemExit(
-                "mixed_denoise_backend=rambo_external was requested, but no bundled RAMBO executable is configured."
-            )
-        labels, backend_used = greedy_labels(records, args.greedy_min_identity)
-        fallback_reason = "rambo_external_not_bundled"
     elif backend_requested == "umap_hdbscan":
         if total < args.min_reads_for_umap:
             if not allow_fallback:

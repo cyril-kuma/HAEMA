@@ -1,9 +1,9 @@
 # Limitations & scientific caveats
 
 HÆMA is research software. This page is the honest, consolidated statement of what is and is not
-yet validated, so results are not over-interpreted. Implemented-vs-planned features are tracked in
-[`DELIBERATE_LIMITATIONS.md`](DELIBERATE_LIMITATIONS.md); this page focuses on **scientific
-defensibility**.
+yet validated, so results are not over-interpreted. It covers both **scientific defensibility**
+(the caveats below) and **feature status** (implemented vs staged — see the
+[table at the end](#feature-status-implemented-vs-staged)).
 
 ## Implemented and exercised on data
 - Metadata/control validation, marker-aware primer trimming, Q20/length filtering, and
@@ -14,9 +14,15 @@ defensibility**.
 - Curated **local-first BLAST** with a conservative LCA and an optional external `nt` fallback.
 - Control-aware contamination flagging and a RAMBO-style mixed-host evidence/host-call layer.
 - phyloseq/decontam endpoints (formal with `haema-r`; documented fallback otherwise).
-- End-to-end real-data demonstration (Ghana RUN01): mixed feeding detected in multiple samples
-  with biologically plausible hosts (e.g. Human + Goat corroborated across two markers), a clean
-  negative control, and a Human-dominant positive control.
+- End-to-end real-data demonstration (a Ghana R10.4.1 set of 9 sequencing runs, 51 samples and
+  controls): mixed feeding detected in multiple samples with biologically plausible hosts (e.g.
+  Human + Goat corroborated across two markers). Single-host positive controls recovered their
+  declared host (3/3), and negative controls showed only low-level *Ovis aries* background
+  (count = 3) that the contamination layer flagged. **Mixed-host recovery was, however, only 50%
+  (3 of 6 declared hosts):** one Human + *Bos taurus* control recovered no host signal and another
+  recovered only Human — even though *Bos taurus* is in the curated panel, i.e. a
+  denoising/detection-sensitivity gap, not a panel-coverage gap. The HTML report and
+  `positive_control_check.tsv` surface this explicitly; see caveat 1.
 
 ## Caveats you must respect when interpreting results
 
@@ -29,9 +35,10 @@ defensibility**.
    run manifest and the report; the report explicitly states host fractions are evidence summaries.
    Both *single-host* and *lab-prepared mixed-host* controls are now checked automatically against
    their declared `expected_host_scientific_name` (`positive_control_check.tsv`), reporting per-host
-   recovery, missing, and unexpected hosts plus a `mixed_host_recovery_rate`. The bundled RUN01
-   `mf` samples are lab-prepared mixtures and can be used directly as the calibration set once their
-   known composition is declared — see [`benchmarking.md`](benchmarking.md). This benchmarks
+   recovery, missing, and unexpected hosts plus a `mixed_host_recovery_rate`. The lab-prepared
+   `mf`-noted mixed-host controls (RUN09 in the demonstration set) are constructed mixtures and can
+   be used directly as the calibration set once their known composition is declared — see
+   [`benchmarking.md`](benchmarking.md). This benchmarks
    **detection/recovery**; quantitative host-*fraction* accuracy still needs controls prepared at
    **known mixing ratios**.
 
@@ -40,10 +47,13 @@ defensibility**.
    these, but cluster *counts* are not host counts. Trust `host_call_table.tsv`, not raw cluster
    numbers.
 
-3. **Taxonomy breadth is bounded by the curated panel.** The bundled panel is ~20 vertebrate
+3. **Taxonomy breadth is bounded by the curated panel.** The bundled panel is 20 vertebrate
    mitogenomes (common Ghanaian/peridomestic hosts). Hosts absent from the panel will be
    unassigned or mis-assigned to the nearest relative unless you supply an `nt` fallback
    (`--fallback_blast_db`). The panel still needs publication-scale expansion and versioning.
+   The `nt`-fallback and taxdump-backed-LCA paths are implemented and unit-tested but were **not**
+   exercised in the demonstration run (which used `--taxonomy_strategy curated_only` with the
+   conservative top-hit LCA and no `--taxdump_dir`).
 
 4. **Taxids come from the curated sidecar (not embedded in the BLAST DB) — but taxid-LCA still
    works.** The panel's descriptive deflines (`Species|Accession|...`) exceed BLAST's 50-char
@@ -82,3 +92,19 @@ defensibility**.
   taxid LCA.
 - Benchmark host-fraction estimates against known mixtures before reporting quantitative
   zoophagic indices.
+
+## Feature status (implemented vs staged)
+
+A concise map of what the workflow does today versus what is intentionally staged for later. "Off by
+default" features are real and tested but gated behind a flag/profile because they need extra inputs
+or resources.
+
+| Area | Implemented now | Staged / external |
+|---|---|---|
+| **Input** | Already-basecalled MinKNOW `fastq_pass/barcodeXX` (Dorado SUP, R10.4.1) | POD5/Dorado re-basecalling and raw-signal recovery (hard-errors with a clear message if `--input_type pod5`) |
+| **Demultiplexing** | Trusted pre-demuxed MinKNOW folders (default); `header_tag` pooled-FASTQ demux; external-tool command-template wrapper | Barbell/Deepbinner are **not bundled** — runnable only via `--advanced_demux_command_template` with a user-supplied tool/container |
+| **Mixed-template denoising** | UMAP/HDBSCAN k-mer clustering with a deterministic greedy fallback; cluster FASTQs, membership tables, summaries; RAMBO-style host-evidence/host-call layer | Probabilistic mixed-template modelling; calibration of `min_cluster_size`/`min_cluster_fraction` against lab-prepared mixed controls (framework shipped, wet-lab controls needed) |
+| **Consensus / polishing** | Greedy cluster consensus and exact dereplication; optional Medaka (off by default, model verified at runtime by `MEDAKA_MODEL_PREFLIGHT`) | Validation that Medaka polishing does not merge co-eluting hosts (needs mixed-host controls) |
+| **Taxonomy / LCA** | Curated-panel BLASTn; optional local `nt` fallback; taxids backfilled from the curated sidecar; conservative top-hit and exact-taxid LCA without a taxdump, and true taxdump-backed LCA with `--taxdump_dir` | Panel expansion/versioning, marker-specific extracted references, and a bundled NCBI taxdump snapshot. Note: `makeblastdb` is run **without** `-parse_seqids`/`-taxid_map` (the panel's descriptive deflines exceed BLAST's 50-char local-id limit); the taxid map is emitted as a provenance artifact only and taxids are joined from the sidecar |
+| **Contamination & R ecology** | Negative-control background thresholds; decontam (formal with `haema-r`, documented fallback otherwise); phyloseq + decontaminated RDS/TSV endpoints | Quantitative host-fraction validation (needs controls at known mixing ratios) |
+| **Reporting** | Custom HÆMA HTML report (primary); optional MultiQC custom-content summary tables; machine-readable `run_manifest.json` | — |

@@ -18,9 +18,12 @@ workflow PREPROCESS_READS {
             tuple(marker_meta, reads)
         }
 
+    // Only per-sample/per-marker summary tables feed the aggregated qc_summary.tsv. The per-read
+    // read_decisions tables (one row per read => millions on real data) are excluded here to keep
+    // qc_summary.tsv small enough for AGGREGATE_RESULTS / BUILD_R_OUTPUTS to load without OOM (exit
+    // 137). They remain published per sample under 02_trimmed_filtered/qc/*.read_decisions.tsv.
     ch_qc_tables = MERGE_FASTQ_CHUNKS.out.stats
         .mix(TRIM_FILTER_SPLIT_MARKERS.out.summary)
-        .mix(TRIM_FILTER_SPLIT_MARKERS.out.decisions)
 
     emit:
     marker_reads = ch_marker_reads

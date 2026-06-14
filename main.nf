@@ -122,9 +122,13 @@ workflow {
                     tuple(meta + [cluster_id: cluster_id], read_file)
                 }
             }
+        // NB: only per-sample/per-cluster *summaries* feed the aggregated qc_summary.tsv.
+        // The per-read cluster_membership tables (one row per read => millions on real data)
+        // are deliberately excluded here: they bloated qc_summary.tsv to ~1 GB and OOM-killed
+        // AGGREGATE_RESULTS / BUILD_R_OUTPUTS (exit 137). They remain published per sample under
+        // 03_consensus_variants/mixed_denoising/qc/*.cluster_membership.tsv for diagnostics.
         ch_preprocess_qc_for_aggregate = PREPROCESS_READS.out.qc_tables
             .mix(DENOISE_MIXED_TEMPLATES.out.summaries)
-            .mix(DENOISE_MIXED_TEMPLATES.out.membership)
     } else {
         ch_consensus_input = PREPROCESS_READS.out.marker_reads
             .map { meta, reads -> tuple(meta + [cluster_id: 'all'], reads) }

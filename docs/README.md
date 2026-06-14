@@ -10,13 +10,9 @@
 | [limitations.md](limitations.md) | Scientific caveats; what is and isn't validated. |
 | [reproducibility.md](reproducibility.md) | Reproducibility statement and pinning. |
 | [CONTAINER_STRATEGY.md](CONTAINER_STRATEGY.md) | Container choices, pinning, custom-vs-public rationale. |
-| [DELIBERATE_LIMITATIONS.md](DELIBERATE_LIMITATIONS.md) | Implemented vs staged/planned features. |
-| [REFERENCE_PANEL_REVIEW.md](REFERENCE_PANEL_REVIEW.md) | Curated reference panel review. |
-| [IMPLEMENTATION_PLAN.md](IMPLEMENTATION_PLAN.md) | Historical implementation plan. |
-| [release_checklist.md](release_checklist.md) | Release-readiness checklist per milestone. |
 
-Scientific background lives in the project-level `proposal.md` and the Nextflow architecture
-blueprint (`Nextflow Pipeline Design for Blood-Meal Analysis.md`).
+Implemented-vs-staged feature status lives in the
+[feature-status table](limitations.md#feature-status-implemented-vs-staged) of `limitations.md`.
 
 Start with [usage.md](usage.md). New to the project? The repository [README](../README.md) has the
 quick start and a workflow diagram.

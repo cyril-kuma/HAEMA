@@ -250,7 +250,8 @@ This is research software. Headline caveats (full list: [`docs/limitations.md`](
 - Barbell/Deepbinner demultiplexing and POD5/Dorado basecalling are **staged/external**, not
   bundled.
 
-Implemented vs planned features are tracked in [`docs/DELIBERATE_LIMITATIONS.md`](docs/DELIBERATE_LIMITATIONS.md).
+Implemented vs staged/planned features are tracked in the feature-status table in
+[`docs/limitations.md`](docs/limitations.md#feature-status-implemented-vs-staged).
 
 ---
 

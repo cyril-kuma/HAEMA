@@ -25,5 +25,5 @@ keywords:
   - Nextflow
   - malaria
   - vector ecology
-repository-code: "https://github.com/USER/haema"   # TODO: set to the public repository URL
+repository-code: "https://github.com/cyril-kuma/HAEMA"
 # doi: "10.5281/zenodo.XXXXXXX"                       # TODO: add a Zenodo DOI on release
