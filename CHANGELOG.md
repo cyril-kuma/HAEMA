@@ -20,6 +20,11 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 - Removed the non-functional `rambo_external` value from the `mixed_denoise_backend` schema enum and
   the dead branch in `bin/denoise_mixed_templates.py` (it never ran an external RAMBO; it silently
   greedy-fell-back), so `--help` no longer advertises an unimplemented backend.
+- Remove the unimplemented `pod5` value from the `input_type` enum (`nextflow_schema.json` + the
+  `main.nf` guard). HÆMA ingests already-basecalled, already-demultiplexed MinKNOW FASTQ
+  (`fastq_pass/barcodeXX`); `--help` no longer advertises a POD5/Dorado basecalling path that does
+  not exist, and `--input_type pod5` is now rejected by schema validation. Supported: `fastq`,
+  `pooled_fastq`.
 - Set `manifest.homePage` (`nextflow.config`) and `repository-code` (`CITATION.cff`) to the public
   repository URL.
 

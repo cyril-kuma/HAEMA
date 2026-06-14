@@ -101,7 +101,7 @@ or resources.
 
 | Area | Implemented now | Staged / external |
 |---|---|---|
-| **Input** | Already-basecalled MinKNOW `fastq_pass/barcodeXX` (Dorado SUP, R10.4.1) | POD5/Dorado re-basecalling and raw-signal recovery (hard-errors with a clear message if `--input_type pod5`) |
+| **Input** | Already-basecalled MinKNOW `fastq_pass/barcodeXX` (Dorado SUP, R10.4.1) — the standard and only ingest path | POD5/Dorado re-basecalling and raw-signal recovery (not an accepted input type; HÆMA ingests already-basecalled FASTQ) |
 | **Demultiplexing** | Trusted pre-demuxed MinKNOW folders (default); `header_tag` pooled-FASTQ demux; external-tool command-template wrapper | Barbell/Deepbinner are **not bundled** — runnable only via `--advanced_demux_command_template` with a user-supplied tool/container |
 | **Mixed-template denoising** | UMAP/HDBSCAN k-mer clustering with a deterministic greedy fallback; cluster FASTQs, membership tables, summaries; RAMBO-style host-evidence/host-call layer | Probabilistic mixed-template modelling; calibration of `min_cluster_size`/`min_cluster_fraction` against lab-prepared mixed controls (framework shipped, wet-lab controls needed) |
 | **Consensus / polishing** | Greedy cluster consensus and exact dereplication; optional Medaka (off by default, model verified at runtime by `MEDAKA_MODEL_PREFLIGHT`) | Validation that Medaka polishing does not merge co-eluting hosts (needs mixed-host controls) |

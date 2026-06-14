@@ -53,11 +53,10 @@
                     "type": "string",
                     "enum": [
                         "fastq",
-                        "pooled_fastq",
-                        "pod5"
+                        "pooled_fastq"
                     ],
                     "default": "fastq",
-                    "description": "Input data type. pooled_fastq enables optional advanced demultiplexing. POD5 is reserved for a future Dorado module."
+                    "description": "Input data type. 'fastq' = already-basecalled, already-demultiplexed MinKNOW fastq_pass/barcodeXX (the standard input). 'pooled_fastq' enables optional advanced demultiplexing of one or more pooled FASTQ files."
                 },
                 "pooled_fastq": {
                     "type": "string",

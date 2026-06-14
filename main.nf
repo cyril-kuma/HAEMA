@@ -53,11 +53,8 @@ workflow {
     if (!params.raw_data_dir && !(params.enable_advanced_demux || params.input_type == 'pooled_fastq')) {
         error "Missing --raw_data_dir"
     }
-    if (!['fastq', 'pooled_fastq', 'pod5'].contains(params.input_type as String)) {
-        error "Unsupported --input_type '${params.input_type}'. Supported: fastq, pooled_fastq. Reserved for later: pod5."
-    }
-    if (params.input_type == 'pod5') {
-        error "POD5 basecalling is designed as a future module. This first implementation ingests already-basecalled FASTQ."
+    if (!['fastq', 'pooled_fastq'].contains(params.input_type as String)) {
+        error "Unsupported --input_type '${params.input_type}'. Supported: fastq (already-basecalled MinKNOW fastq_pass/barcodeXX) or pooled_fastq."
     }
     if ((params.enable_advanced_demux || params.input_type == 'pooled_fastq') && !params.pooled_fastq) {
         error "Advanced demultiplexing requires --pooled_fastq with one or more pooled FASTQ files."
