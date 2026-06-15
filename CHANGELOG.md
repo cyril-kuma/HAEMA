@@ -4,7 +4,7 @@ All notable changes to the HÆMA pipeline are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.3.0] - 2026-06-15
 
 ### Fixed
 - **qc_summary OOM (exit 137).** The aggregated `qc_summary.tsv` no longer concatenates the per-read
@@ -25,6 +25,10 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
   (`fastq_pass/barcodeXX`); `--help` no longer advertises a POD5/Dorado basecalling path that does
   not exist, and `--input_type pod5` is now rejected by schema validation. Supported: `fastq`,
   `pooled_fastq`.
+- **Medaka consensus polishing is now ON by default** (`enable_medaka=true`): real ONT consensus
+  polishing runs before taxonomy. It needs the pinned ONT Medaka image (multi-GB, pulled once) and a
+  model present in it (verified at runtime by `MEDAKA_MODEL_PREFLIGHT`); the `test` profile keeps it
+  off for speed.
 - Set `manifest.homePage` (`nextflow.config`) and `repository-code` (`CITATION.cff`) to the public
   repository URL.
 

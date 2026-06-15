@@ -14,8 +14,8 @@ authors:
     family-names: Kuma
     # orcid: "https://orcid.org/0000-0000-0000-0000"   # TODO: add your ORCID
     # affiliation: "TODO: add your institution"
-version: 0.2.0
-date-released: "2026-06-12"
+version: 0.3.0
+date-released: "2026-06-15"
 license: MIT
 keywords:
   - metabarcoding

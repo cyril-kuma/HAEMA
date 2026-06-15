@@ -34,11 +34,12 @@ flowchart TD
     I --> J["09 · Endpoints: master table, host calls,<br/>phyloseq/decontam .rds, reports"]
 ```
 
-Optional/staged gates are conservative by default: pooled-FASTQ demultiplexing and Medaka polishing
-are off unless requested, strict production metadata/taxid/taxdump/Bioconductor checks are off until
-`-profile production`, and an external `nt` BLAST fallback runs only when you supply a database.
-Fallback R outputs and MultiQC are enabled in normal runs, while the tiny `test` profile disables
-heavier report steps unless you explicitly turn them back on.
+Optional/staged gates are conservative by default: pooled-FASTQ demultiplexing is off unless
+requested, and strict production metadata/taxid/taxdump/Bioconductor checks are off until
+`-profile production`; an external `nt` BLAST fallback runs only when you supply a database. **Medaka
+consensus polishing is on by default** (it needs the pinned ONT Medaka image, pulled once); the tiny
+`test` profile turns it off to stay fast. Fallback R outputs and MultiQC are enabled in normal runs,
+while the `test` profile disables heavier report steps unless you explicitly turn them back on.
 
 ---
 
@@ -214,7 +215,7 @@ bash tests/validate_release.sh --run   # full pre-release validation incl. a tes
 | ~8 samples, 5k reads each (real UMAP) | 8 | 14 GB | ~15–30 min | numba JIT recompiles per task |
 | Full run / 96 barcodes | HPC | per-process labels | hours | use `-profile slurm` |
 
-Heaviest steps are `DENOISE_MIXED_TEMPLATES` and (if enabled) `MEDAKA_POLISH`. Resource requests
+Heaviest steps are `DENOISE_MIXED_TEMPLATES` and `MEDAKA_POLISH` (on by default). Resource requests
 scale per retry-attempt under a `resourceLimits` ceiling (8 cores / 14 GB locally; raised by
 `-profile slurm`). Set `--cleanup true` for large runs to purge work dirs on success (disables
 `-resume`).

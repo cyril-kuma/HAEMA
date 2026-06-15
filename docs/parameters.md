@@ -50,7 +50,7 @@ speed; pass `--skip_taxonomy false` when you want the demo to exercise curated B
 | Parameter | Default | Description |
 |---|---|---|
 | `--consensus_method` | `cluster` | `cluster` (greedy consensus) or `dereplicate` (exact). |
-| `--enable_medaka` | false | Medaka polishing (needs a Medaka container + model). |
+| `--enable_medaka` | **true** | Medaka consensus polishing before taxonomy (on by default; needs the ONT Medaka image + a model present in it; the `test` profile disables it for speed). |
 | `--medaka_model` | `r1041_e82_400bps_sup_v4.3.0` | Must exist in the Medaka image (checked at runtime). |
 
 ## Taxonomy

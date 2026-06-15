@@ -256,8 +256,8 @@
                 },
                 "enable_medaka": {
                     "type": "boolean",
-                    "default": false,
-                    "description": "Polish retained consensus/ASV FASTA with Medaka before taxonomy."
+                    "default": true,
+                    "description": "Polish retained consensus/ASV FASTA with Medaka before taxonomy (on by default; needs the pinned ONT Medaka image and a model present in it, verified at runtime). The test profile disables it for speed."
                 },
                 "medaka_model": {
                     "type": "string",
