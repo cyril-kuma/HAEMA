@@ -6,6 +6,7 @@ PROFILE    ?= test,docker
 OUTDIR     ?= results/make_test
 PY_IMAGE   ?= haema-python:0.3.0
 R_IMAGE    ?= haema-r:0.3.0
+FIG_IMAGE  ?= haema-figures:0.3.0
 MEDAKA_IMG ?= haema-medaka:0.3.0
 # Set REGISTRY to your registry namespace to push, e.g. REGISTRY=ghcr.io/USER
 REGISTRY   ?=
@@ -50,6 +51,7 @@ stub:  ## Whole-DAG stub run (all optional features on)
 	$(NXF) run . -profile test,docker -stub-run \
 	  --skip_taxonomy false --enable_medaka true --medaka_container python:3.11 \
 	  --enable_r_outputs true --enable_multiqc true --multiqc_container python:3.11 \
+	  --enable_figures true --figures_container python:3.11 \
 	  --blast_container python:3.11 --outdir results/make_stub --log_dir logs/make_stub
 
 .PHONY: prerelease
@@ -58,18 +60,21 @@ prerelease:  ## Run the full pre-release validation script
 
 ## ---- custom container images (production) ----
 .PHONY: images
-images: image-python image-r  ## Build the two required custom images
+images: image-python image-r image-figures  ## Build the custom images (denoising, R, figures)
 
 image-python:  ## Build haema-python
 	docker build -t $(PY_IMAGE) -f containers/haema-python/Dockerfile .
 image-r:  ## Build haema-r
 	docker build -t $(R_IMAGE) -f containers/haema-r/Dockerfile .
+image-figures:  ## Build haema-figures (publication figure stack)
+	docker build -t $(FIG_IMAGE) -f containers/haema-figures/Dockerfile .
 image-medaka:  ## Build the OPTIONAL model-asserted Medaka image
 	docker build -t $(MEDAKA_IMG) -f containers/haema-medaka/Dockerfile .
 
 .PHONY: push
 push:  ## Tag+push custom images to $REGISTRY (set REGISTRY=...). Prints digests to pin.
 	@test -n "$(REGISTRY)" || { echo "Set REGISTRY=<namespace>, e.g. REGISTRY=ghcr.io/USER"; exit 1; }
-	docker tag $(PY_IMAGE) $(REGISTRY)/$(PY_IMAGE) && docker push $(REGISTRY)/$(PY_IMAGE)
-	docker tag $(R_IMAGE)  $(REGISTRY)/$(R_IMAGE)  && docker push $(REGISTRY)/$(R_IMAGE)
-	@echo "Now pin the printed @sha256: digests in nextflow.config (params.python_container / r_container)."
+	docker tag $(PY_IMAGE)  $(REGISTRY)/$(PY_IMAGE)  && docker push $(REGISTRY)/$(PY_IMAGE)
+	docker tag $(R_IMAGE)   $(REGISTRY)/$(R_IMAGE)   && docker push $(REGISTRY)/$(R_IMAGE)
+	docker tag $(FIG_IMAGE) $(REGISTRY)/$(FIG_IMAGE) && docker push $(REGISTRY)/$(FIG_IMAGE)
+	@echo "Now pin the printed @sha256: digests in nextflow.config (params.python_container / r_container / figures_container)."

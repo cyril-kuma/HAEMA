@@ -455,6 +455,16 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Generate a MultiQC report when native logs are available."
+                },
+                "enable_figures": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Generate publication-ready manuscript figures (matplotlib/seaborn) from the endpoint tables into 07_figures/. Needs the figures_container; disabled by the test profile."
+                },
+                "figure_formats": {
+                    "type": "string",
+                    "default": "pdf,svg,png",
+                    "description": "Comma-separated output formats for figures (any of pdf, svg, png)."
                 }
             }
         },
@@ -531,6 +541,11 @@
                     "type": "string",
                     "default": "multiqc/multiqc:v1.25@sha256:ad08efaedd4e31b860edf05d058ff16178692924b1b0e74ed1db387ce3ba0ffd",
                     "description": "MultiQC container (digest-pinned) used when --enable_multiqc true."
+                },
+                "figures_container": {
+                    "type": "string",
+                    "default": "haema-figures:0.3.0",
+                    "description": "Figure-generation container (matplotlib/seaborn). Build from containers/haema-figures/Dockerfile or push to a registry and pass its @sha256 digest, like haema-python/haema-r."
                 }
             }
         }

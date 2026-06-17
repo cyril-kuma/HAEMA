@@ -18,6 +18,7 @@ include { BUILD_REPORT } from './modules/local/report/main.nf'
 include { BUILD_R_OUTPUTS } from './modules/local/r_outputs/main.nf'
 include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
+include { BUILD_FIGURES } from './modules/local/figures/main.nf'
 include { BUILD_RUN_MANIFEST } from './modules/local/run_manifest/main.nf'
 
 // Schema-based validation, grouped --help, and a run-parameter summary (nf-schema plugin).
@@ -36,7 +37,7 @@ workflow {
     log.info "Results directory : ${params.outdir}"
     log.info "Production mode    : ${params.production_mode}"
     log.info "Feature gates      : taxonomy=${!params.skip_taxonomy} denoise=${params.enable_mixed_denoising}(${params.mixed_denoise_backend}) " +
-             "medaka=${params.enable_medaka} rambo=${params.enable_rambo_model} r_outputs=${params.enable_r_outputs} multiqc=${params.enable_multiqc}"
+             "medaka=${params.enable_medaka} rambo=${params.enable_rambo_model} r_outputs=${params.enable_r_outputs} multiqc=${params.enable_multiqc} figures=${params.enable_figures}"
 
     // Make reference-panel divergence provenance-visible (its sha256 is recorded in run_manifest.json).
     def bundled_ref = "${projectDir}/assets/references/vertebrate_dna_ref_panel.fasta".toString()
@@ -211,6 +212,29 @@ workflow {
         AGGREGATE_RESULTS.out.qc_summary,
         AGGREGATE_RESULTS.out.contamination_flags
     )
+
+    // Publication-ready manuscript figures, built from whatever endpoint/report tables exist.
+    // Only the tables whose producing step actually ran are mixed in; build_figures.py skips any
+    // figure whose inputs are absent, so this degrades gracefully when rambo/R outputs are off.
+    if (params.enable_figures) {
+        ch_figure_inputs = AGGREGATE_RESULTS.out.master_endpoint
+            .mix(AGGREGATE_RESULTS.out.sample_summary)
+            .mix(AGGREGATE_RESULTS.out.marker_summary)
+            .mix(AGGREGATE_RESULTS.out.qc_summary)
+            .mix(AGGREGATE_RESULTS.out.contamination_flags)
+        if (params.enable_rambo_model) {
+            ch_figure_inputs = ch_figure_inputs
+                .mix(RAMBO_MIXED_MODEL.out.host_calls)
+                .mix(RAMBO_MIXED_MODEL.out.summary)
+                .mix(RAMBO_MIXED_MODEL.out.control_check)
+        }
+        if (params.enable_r_outputs) {
+            ch_figure_inputs = ch_figure_inputs
+                .mix(BUILD_R_OUTPUTS.out.contamination_summary)
+                .mix(BUILD_R_OUTPUTS.out.thresholds)
+        }
+        BUILD_FIGURES(ch_figure_inputs.collect())
+    }
 
     BUILD_RUN_MANIFEST(
         AGGREGATE_RESULTS.out.manifest,

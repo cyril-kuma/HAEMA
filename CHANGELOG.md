@@ -4,6 +4,23 @@ All notable changes to the HÆMA pipeline are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Publication figure layer (`BUILD_FIGURES`, on by default).** A new step renders eight
+  manuscript-ready figures from the endpoint tables into `07_figures/` as vector PDF + SVG + 300 dpi
+  PNG, plus `figure_captions.md` (draft captions naming each figure's inputs) and
+  `figure_manifest.tsv`: (1) workflow schematic, (2) sequencing/QC funnel + read quality + amplicon
+  sizes, (3) depth & denoising-backend usage, (4) host assignment overview + identity/coverage,
+  (5) per-sample host composition, (6) mixed-host feeding evidence, (7) controls & contamination,
+  (8) host detections by ecological zone and vector sibling species. Driven by
+  [`bin/build_figures.py`](bin/build_figures.py) (matplotlib/seaborn), which reads only real pipeline
+  outputs, uses a colour-blind-safe palette, and degrades gracefully (a missing table skips its
+  figure; the step fails only if no figure can be produced). New params `--enable_figures`,
+  `--figure_formats`; new project image `haema-figures:0.3.0`
+  (`containers/haema-figures/Dockerfile`) and `--figures_container`. Disabled by `-profile test`.
+  Documented in [`docs/figures.md`](docs/figures.md).
+
 ## [0.3.0] - 2026-06-15
 
 ### Fixed

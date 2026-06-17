@@ -11,7 +11,8 @@ results/
 │                           consensus/ASV FASTAs + counts, medaka/ (if enabled)
 ├── 04_taxonomy/            blast_db/, curated_reference/, raw_blast/, assignments/, evidence/
 ├── 05_endpoint_files/      core downstream tables + .rds objects + run_manifest.json
-└── 06_reports/             bloodmeal_pipeline_report.html, multiqc_report.html, decontam_*, qc_*
+├── 06_reports/             bloodmeal_pipeline_report.html, multiqc_report.html, decontam_*, qc_*
+└── 07_figures/             publication figures (pdf/svg/png) + figure_captions.md + figure_manifest.tsv
 pipeline_info/              execution_timeline.html, execution_report.html, execution_trace.tsv, pipeline_dag.html
 ```
 
@@ -74,6 +75,13 @@ denoising thresholds with it.
   (`umap_hdbscan` = real method, `greedy_identity` = fallback), `n_clusters`, `fallback_reason`.
 - `06_reports/qc_background_thresholds.tsv` — negative-control background limits (with `haema-r`).
 - `bloodmeal_pipeline_report.html` — human-readable run summary (primary interpretation report).
+
+## Figures you can drop into a manuscript (`07_figures/`)
+The `BUILD_FIGURES` step renders eight publication-ready figures (workflow schematic, sequencing/QC,
+depth & denoising, host assignment, per-sample host composition, mixed-host feeding, controls &
+contamination, ecological stratification) as **PDF + SVG + 300 dpi PNG**, plus `figure_captions.md`
+(draft captions naming each figure's input files) and `figure_manifest.tsv`. Every panel is built
+from the tables above — see [`figures.md`](figures.md) for what each shows and how to regenerate them.
 
 ## File-naming convention
 Output files are keyed by a **compound sample UID**: `sample_uid = <run_id>__<barcode_id>__<sample_id>`,

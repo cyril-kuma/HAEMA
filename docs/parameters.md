@@ -71,9 +71,15 @@ speed; pass `--skip_taxonomy false` when you want the demo to exercise curated B
 | `--strict_bioconductor` | false | Fail if formal phyloseq/decontam are missing (needs `haema-r`). |
 | `--decontam_threshold` | 0.5 | decontam / negative-control prevalence threshold. |
 
+## Figures
+| Parameter | Default | Description |
+|---|---|---|
+| `--enable_figures` | true | Render publication figures to `07_figures/` (needs `haema-figures`; off in `-profile test`). See [figures.md](figures.md). |
+| `--figure_formats` | `pdf,svg,png` | Comma-separated output formats (any subset of `pdf`, `svg`, `png`). |
+
 ## Containers (pinned defaults; see docs/CONTAINER_STRATEGY.md)
 `--python_container`, `--blast_container`, `--r_container`, `--medaka_container`,
-`--multiqc_container`, `--advanced_demux_container`.
+`--multiqc_container`, `--figures_container`, `--advanced_demux_container`.
 
 ## Execution
 `--cleanup` (purge work dirs on success; disables `-resume`), plus the profiles

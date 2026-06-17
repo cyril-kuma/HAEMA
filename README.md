@@ -31,7 +31,7 @@ flowchart TD
     F --> G["06 · Taxonomy: curated local BLAST<br/>+ conservative LCA (optional nt fallback)"]
     G --> H["07 · Contamination assessment<br/>(negative-control background)"]
     H --> I["08 · RAMBO-style mixed-host evidence & host calls"]
-    I --> J["09 · Endpoints: master table, host calls,<br/>phyloseq/decontam .rds, reports"]
+    I --> J["09 · Endpoints: master table, host calls,<br/>phyloseq/decontam .rds, reports, figures"]
 ```
 
 Optional/staged gates are conservative by default: pooled-FASTQ demultiplexing is off unless
@@ -157,18 +157,20 @@ Combine one infrastructure profile with optional feature profiles, comma-separat
 
 ## Containers
 
-Public images are **digest-pinned**; nothing uses `:latest`. Two project-specific images are
-needed **only** by the `production` profile / real denoising, where no public image provides the
-scientific stack. Full rationale: [`docs/CONTAINER_STRATEGY.md`](docs/CONTAINER_STRATEGY.md).
+Public images are **digest-pinned**; nothing uses `:latest`. Three project-specific images cover
+stacks no public image provides; the first two are needed by the `production` profile / real
+denoising, the third by the (default-on) figure step. Full rationale:
+[`docs/CONTAINER_STRATEGY.md`](docs/CONTAINER_STRATEGY.md).
 
 ```bash
-# Build the two custom images (from the repo root) for production / real UMAP+HDBSCAN:
-docker build -t haema-python:0.3.0 -f containers/haema-python/Dockerfile .   # UMAP/HDBSCAN
-docker build -t haema-r:0.3.0     -f containers/haema-r/Dockerfile .         # phyloseq/decontam
+# Build the custom images (from the repo root):
+docker build -t haema-python:0.3.0  -f containers/haema-python/Dockerfile .   # UMAP/HDBSCAN
+docker build -t haema-r:0.3.0       -f containers/haema-r/Dockerfile .        # phyloseq/decontam
+docker build -t haema-figures:0.3.0 -f containers/haema-figures/Dockerfile .  # matplotlib figures
 ```
 
 For HPC/publication, push these to a registry and pass their immutable `@sha256:` digests via
-`--python_container` / `--r_container`.
+`--python_container` / `--r_container` / `--figures_container`.
 
 ---
 
@@ -181,15 +183,17 @@ results/
 ├── 03_consensus_variants/ denoised cluster FASTQs + consensus/ASV features
 ├── 04_taxonomy/          BLAST DB, raw BLAST hits, per-feature assignments
 ├── 05_endpoint_files/    ⭐ core downstream tables + phyloseq/decontam .rds + run_manifest.json
-└── 06_reports/           HÆMA HTML report, MultiQC, decontam summaries
+├── 06_reports/           HÆMA HTML report, MultiQC, decontam summaries
+└── 07_figures/           ⭐ publication figures (pdf/svg/png) + draft captions
 pipeline_info/            Nextflow execution timeline, report, trace, DAG
 ```
 
 The primary deliverable is `05_endpoint_files/bloodmeal_master_endpoint.tsv` (controls preserved
 and flagged, never silently dropped) and `host_call_table.tsv` (per sample/marker host calls with
 `mixed_status` = `single_host` / `mixed_host`). `06_reports/positive_control_check.tsv` reports
-whether each single-host positive control recovered its declared host. See
-[`docs/output.md`](docs/output.md) for how to read each file.
+whether each single-host positive control recovered its declared host. `07_figures/` holds
+eight publication-ready figures rendered from these tables (see [`docs/figures.md`](docs/figures.md)).
+See [`docs/output.md`](docs/output.md) for how to read each file.
 
 > **Scientific caution:** host fractions are abundance **evidence summaries, not validated
 > quantitative estimates**, and mixed-host thresholds are not yet benchmarked. The HTML report and
