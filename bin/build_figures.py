@@ -773,6 +773,127 @@ def fig_ecology(master, outdir, formats, manifest):
 
 
 # --------------------------------------------------------------------------------------
+# Figure 9 — ecological indices (HBI, zoophily, feeding-type partition, host diversity)
+# --------------------------------------------------------------------------------------
+def _eco_get(idx, st_type, stratum, metric, col="value"):
+    sub = idx[(idx["stratum_type"] == st_type) & (idx["stratum"] == stratum) & (idx["metric"] == metric)]
+    if sub.empty:
+        return None
+    return safe_float(sub.iloc[0][col])
+
+
+def fig_ecological_indices(idx, outdir, formats, manifest):
+    if idx.empty:
+        print("  [skip] figure 09: no ecological_indices.tsv")
+        return []
+    zone_order = ["Coastal_Savannah", "Forest", "Northern_Savannah"]
+    sp_order = ["Anopheles_coluzzii", "Anopheles_gambiae_s.s", "Anopheles_arabiensis"]
+
+    def ordered(st_type, preferred):
+        present = set(idx[idx["stratum_type"] == st_type]["stratum"])
+        return [x for x in preferred if x in present] + sorted(present - set(preferred))
+
+    strata = [("overall", "all_field_samples", "Overall", "Overall")]
+    for z in ordered("ecological_zone", zone_order):
+        nm = z.replace("_", " ")
+        strata.append(("ecological_zone", z, f"Zone · {nm}", nm))
+    for s in ordered("sibling_species", sp_order):
+        nm = s.replace("Anopheles_", "An. ").replace("_", " ")
+        strata.append(("sibling_species", s, f"Sp · {nm}", nm))
+
+    fig = plt.figure(figsize=(10.0, 6.8))
+    gs = fig.add_gridspec(2, 2, width_ratios=[1.3, 1.0], hspace=0.55, wspace=0.38)
+    axA = fig.add_subplot(gs[:, 0])
+    axB = fig.add_subplot(gs[0, 1])
+    axC = fig.add_subplot(gs[1, 1])
+    ypos = np.arange(len(strata))[::-1]
+
+    # ---- A: HBI & zoophily forest plot with Wilson 95% CIs ----
+    for (st, stm, lab, _short), y in zip(strata, ypos):
+        for metric, color, off in [("human_blood_index", "#0072B2", 0.16),
+                                    ("animal_blood_index_zoophily", "#E69F00", -0.16)]:
+            v = _eco_get(idx, st, stm, metric)
+            lo = _eco_get(idx, st, stm, metric, "ci_low")
+            hi = _eco_get(idx, st, stm, metric, "ci_high")
+            if v is None:
+                continue
+            xerr = [[max(0, v - lo)], [max(0, hi - v)]] if lo is not None and hi is not None else None
+            axA.errorbar(v, y + off, xerr=xerr, fmt="o", color=color, ms=5, capsize=2.5, lw=1.3,
+                         markeredgecolor="white", markeredgewidth=0.5)
+        n = _eco_get(idx, st, stm, "human_blood_index", "n")
+        if n:
+            axA.text(1.02, y, f"n={int(n)}", fontsize=6.6, va="center", color="#555")
+    # group separators
+    for boundary in (0.5, 0.5 + len([s for s in strata if s[0] == "sibling_species"])):
+        pass
+    n_sp = len([s for s in strata if s[0] == "sibling_species"])
+    n_zone = len([s for s in strata if s[0] == "ecological_zone"])
+    axA.axhline(n_sp - 0.5, color="#DDDDDD", lw=0.8)
+    axA.axhline(n_sp + n_zone - 0.5, color="#DDDDDD", lw=0.8)
+    axA.axvline(0.5, color="#CCCCCC", ls=":", lw=0.8)
+    axA.set_yticks(ypos)
+    axA.set_yticklabels([lab for _, _, lab, _ in strata], fontsize=7.6)
+    axA.set_xlim(0, 1.13)
+    axA.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    axA.set_xlabel("Index value (Wilson 95% CI)")
+    axA.set_title("Human Blood Index & zoophily", loc="left")
+    axA.legend(handles=[Line2D([0], [0], marker="o", color="#0072B2", lw=0, label="Human Blood Index"),
+                        Line2D([0], [0], marker="o", color="#E69F00", lw=0, label="Animal index (zoophily)")],
+               loc="lower center", bbox_to_anchor=(0.5, -0.16), ncol=2, fontsize=7)
+    panel_label(axA, "A", dx=-0.02, dy=1.05)
+
+    # ---- B: feeding-type partition (sums to 1) ----
+    cats = [("human_only_fraction", "#0072B2", "human only"),
+            ("mixed_human_animal_fraction", "#7E57C2", "mixed human+animal"),
+            ("animal_only_fraction", "#E69F00", "animal only")]
+    for (st, stm, _lab, short), y in zip(strata, ypos):
+        left = 0.0
+        for metric, color, _name in cats:
+            v = _eco_get(idx, st, stm, metric) or 0.0
+            if v > 0:
+                axB.barh(y, v, left=left, color=color, edgecolor="white", linewidth=0.5)
+                left += v
+    axB.set_yticks(ypos)
+    axB.set_yticklabels([short for *_, short in strata], fontsize=6.8)
+    axB.set_xlim(0, 1.0)
+    axB.set_xlabel("Fraction of identified meals")
+    axB.set_title("Feeding-type composition", loc="left")
+    axB.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=c) for _, c, _ in cats],
+               labels=[n for *_, n in cats], loc="lower center", bbox_to_anchor=(0.5, -0.42),
+               ncol=1, fontsize=6.4)
+    panel_label(axB, "B", dx=-0.04)
+
+    # ---- C: host-community diversity (Shannon H'), richness annotated ----
+    for (st, stm, _lab, short), y in zip(strata, ypos):
+        h = _eco_get(idx, st, stm, "shannon_h")
+        s_rich = _eco_get(idx, st, stm, "host_richness")
+        if h is not None:
+            axC.barh(y, h, color="#2A9D8F", edgecolor="white", linewidth=0.5)
+            if s_rich is not None:
+                axC.text(h + 0.03, y, f"S={int(s_rich)}", va="center", fontsize=6.4, color="#555")
+    axC.set_yticks(ypos)
+    axC.set_yticklabels([short for *_, short in strata], fontsize=6.8)
+    axC.set_xlim(0, 1.7)
+    axC.set_xlabel("Shannon H′ (host community)")
+    axC.set_title("Host diversity", loc="left")
+    panel_label(axC, "C", dx=-0.04)
+
+    caption = ("Figure 9. Vector–host ecological indices. (A) Human Blood Index (proportion of "
+               "host-identified blood meals containing human) and the complementary animal index "
+               "(zoophily), with Wilson 95% confidence intervals, overall and stratified by ecological "
+               "zone and Anopheles gambiae s.l. sibling species (n per stratum at right; dotted line = "
+               "0.5). HBI and zoophily overlap for mixed meals. (B) Feeding-type composition "
+               "(human-only / mixed human+animal / animal-only), which partitions to 1. (C) Host-"
+               "community diversity (Shannon H′; richness S annotated) by mosquito incidence. Indices "
+               "are molecular detection-based and bounded by panel coverage and denoising sensitivity; "
+               "small per-stratum n give wide intervals and these strata are descriptive, not formal "
+               "tests. Availability-dependent indices (forage ratio, Kay feeding index) are not "
+               "computed (no host census). Input: ecological_indices.tsv.")
+    return save_figure(fig, outdir, "figure_09_ecological_indices", formats, manifest, caption,
+                       ["ecological_indices.tsv"])
+
+
+# --------------------------------------------------------------------------------------
 # Driver
 # --------------------------------------------------------------------------------------
 def main():
@@ -799,6 +920,7 @@ def main():
     rambo = read_tsv(rp / "rambo_model_summary.tsv")
     contam_summary = read_tsv(rp / "contamination_model_summary.tsv")
     qc_bg = read_tsv(rp / "qc_background_thresholds.tsv")
+    eco_idx = read_tsv(ep / "ecological_indices.tsv")
 
     print(f"Loaded: master={len(master)} host_calls={len(host_calls)} samples={len(sample_sum)} "
           f"qc={len(qc)} controls={len(control_check)}")
@@ -814,6 +936,7 @@ def main():
         ("figure_07_controls_contamination",
          lambda: fig_controls_contam(control_check, contam_summary, qc_bg, outdir, formats, manifest)),
         ("figure_08_ecology", lambda: fig_ecology(master, outdir, formats, manifest)),
+        ("figure_09_ecological_indices", lambda: fig_ecological_indices(eco_idx, outdir, formats, manifest)),
     ]
     failures = 0
     for name, fn in figures:

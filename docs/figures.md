@@ -14,6 +14,7 @@ results/<run>/07_figures/
 ├── figure_06_mixed_host.{pdf,svg,png}
 ├── figure_07_controls_contamination.{pdf,svg,png}
 ├── figure_08_ecology.{pdf,svg,png}
+├── figure_09_ecological_indices.{pdf,svg,png}
 ├── figure_captions.md      # draft captions, naming the input file(s) for each figure
 └── figure_manifest.tsv     # figure → files → inputs → caption (machine-readable)
 ```
@@ -40,6 +41,7 @@ colour in every figure.
 | **6 · Mixed-host feeding** | Feeding-type composition (single/mixed/none); each detected mixed blood meal as its co-host fractions; mixed-host control sensitivity annotation. | `host_call_table.tsv`, `rambo_model_summary.tsv` |
 | **7 · Controls & contamination** | Positive-control host recovery (expected vs recovered, status); phyloseq/decontam summary and per-marker negative-control background. | `positive_control_check.tsv`, `contamination_model_summary.tsv`, `qc_background_thresholds.tsv` |
 | **8 · Ecology** | Host detections stratified by ecological zone and by *Anopheles gambiae* s.l. sibling species (per-group n shown). | `bloodmeal_master_endpoint.tsv` |
+| **9 · Ecological indices** | Human Blood Index & zoophily forest plot (Wilson 95% CI), feeding-type partition, and host diversity, stratified by zone and sibling species. | `ecological_indices.tsv` |
 
 Full draft captions (with the exact input files) are written to `07_figures/figure_captions.md` on
 every run.

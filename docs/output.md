@@ -77,11 +77,17 @@ denoising thresholds with it.
 - `bloodmeal_pipeline_report.html` — human-readable run summary (primary interpretation report).
 
 ## Figures you can drop into a manuscript (`07_figures/`)
-The `BUILD_FIGURES` step renders eight publication-ready figures (workflow schematic, sequencing/QC,
+The `BUILD_FIGURES` step renders nine publication-ready figures (workflow schematic, sequencing/QC,
 depth & denoising, host assignment, per-sample host composition, mixed-host feeding, controls &
-contamination, ecological stratification) as **PDF + SVG + 300 dpi PNG**, plus `figure_captions.md`
-(draft captions naming each figure's input files) and `figure_manifest.tsv`. Every panel is built
-from the tables above — see [`figures.md`](figures.md) for what each shows and how to regenerate them.
+contamination, ecological stratification, and vector–host ecological indices) as **PDF + SVG + 300
+dpi PNG**, plus `figure_captions.md` (draft captions naming each figure's input files) and
+`figure_manifest.tsv`. Every panel is built from the tables above — see [`figures.md`](figures.md) for
+what each shows and how to regenerate them.
+
+The `ECOLOGICAL_INDICES` step writes `05_endpoint_files/ecological_indices.tsv` (Human Blood Index,
+zoophily, feeding-type partition, mixed-feeding rate, host-specific blood indices, and host diversity
+— overall and by ecological zone and vector sibling species, with Wilson 95% CIs). See
+[`ecological_indices.md`](ecological_indices.md).
 
 ## File-naming convention
 Output files are keyed by a **compound sample UID**: `sample_uid = <run_id>__<barcode_id>__<sample_id>`,

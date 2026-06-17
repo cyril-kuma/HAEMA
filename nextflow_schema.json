@@ -456,6 +456,16 @@
                     "default": true,
                     "description": "Generate a MultiQC report when native logs are available."
                 },
+                "eco_index_zone_column": {
+                    "type": "string",
+                    "default": "collection_region",
+                    "description": "Samplesheet column used as the ecological-zone stratifier for ecological indices (HBI, zoophily, diversity)."
+                },
+                "eco_index_species_column": {
+                    "type": "string",
+                    "default": "sibling_species",
+                    "description": "Samplesheet column used as the vector sibling-species stratifier for ecological indices."
+                },
                 "enable_figures": {
                     "type": "boolean",
                     "default": true,

@@ -7,6 +7,18 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **Vector–host ecological indices (`ECOLOGICAL_INDICES`).** A new step computes the standard
+  malaria-vector blood-meal indices from the host calls into `05_endpoint_files/ecological_indices.tsv`
+  (+ a JSON summary): Human Blood Index (Garrett-Jones 1964), animal/zoophily index, the
+  human-only/mixed/animal-only feeding-type partition, mixed-feeding rate, host-specific blood
+  indices, and host-community diversity (richness, Shannon, Gini–Simpson, Pielou) — computed per
+  mosquito (hosts unioned across markers, controls excluded), with **Wilson 95% CIs**, overall and
+  stratified by ecological zone and vector sibling species (`--eco_index_zone_column`,
+  `--eco_index_species_column`). Availability-dependent selection indices (forage ratio, Kay feeding
+  index) are deliberately **not** computed (no host-availability census) and are listed as excluded.
+  Rendered as **Figure 9** (HBI/zoophily forest plot + feeding-type partition + diversity). Driven by
+  stdlib-only [`bin/compute_ecological_indices.py`](bin/compute_ecological_indices.py); documented in
+  [`docs/ecological_indices.md`](docs/ecological_indices.md).
 - **Publication figure layer (`BUILD_FIGURES`, on by default).** A new step renders eight
   manuscript-ready figures from the endpoint tables into `07_figures/` as vector PDF + SVG + 300 dpi
   PNG, plus `figure_captions.md` (draft captions naming each figure's inputs) and

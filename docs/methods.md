@@ -40,10 +40,21 @@ negative controls were flagged, and (where R/Bioconductor was available) deconta
 (Davis et al., 2018) prevalence calls and negative-control background thresholds were computed.
 Controls were retained and flagged in all tables, never silently removed. Host assemblages per
 sample/marker were summarised with an abundance/evidence model that preserves multiple hosts above
-configurable read and fraction thresholds, classifying each as single- or mixed-host. Final
-outputs included a per-feature master table, host-call tables, an ASV count matrix, phyloseq
-(McMurdie & Holmes, 2013) objects for downstream ecological analysis, a MultiQC report
-(Ewels et al., 2016), and a machine-readable run manifest of parameters and container digests.
+configurable read and fraction thresholds, classifying each as single- or mixed-host.
+
+From the per-mosquito host calls (hosts unioned across markers, controls excluded), standard
+vector–host ecological indices were computed: the Human Blood Index (proportion of host-identified
+blood meals containing human; Garrett-Jones, 1964), the complementary animal/zoophily index, a
+human-only/mixed/animal-only feeding-type partition, the mixed-feeding rate (≥2 host taxa),
+host-specific blood indices, and host-community diversity (richness, Shannon, Gini–Simpson, Pielou
+evenness), each with Wilson score 95% confidence intervals and reported overall and stratified by
+ecological zone and `[sibling_species]`. Availability-dependent selection indices (forage ratio,
+Hess et al., 1968; Kay feeding index) were not computed as no host-availability census was collected.
+
+Final outputs included a per-feature master table, host-call tables, an ASV count matrix, the
+ecological-indices table, phyloseq (McMurdie & Holmes, 2013) objects for downstream ecological
+analysis, a MultiQC report (Ewels et al., 2016), nine publication figures, and a machine-readable
+run manifest of parameters and container digests.
 
 ## Reproducibility
 
@@ -59,5 +70,8 @@ images, and execution traces are recorded in `run_manifest.json` and `pipeline_i
 - Davis NM, et al. decontam. *Microbiome*. 2018.
 - McMurdie PJ, Holmes S. phyloseq. *PLoS ONE*. 2013.
 - Ewels P, et al. MultiQC. *Bioinformatics*. 2016.
+- Garrett-Jones C. The human blood index of malaria vectors… *Bull World Health Organ*. 1964;30:241–261.
+- Orsborne J, et al. Using the human blood index to investigate host biting plasticity… *Malar J*. 2018;17:479.
+- Hess AD, Hayes RO, Tempelis CH. The forage ratio technique in mosquito host preference studies. *Mosq News*. 1968;28:386–389.
 
 > Verify every citation and the exact tool versions against the images you ran before submission.

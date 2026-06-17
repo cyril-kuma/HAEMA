@@ -192,7 +192,9 @@ The primary deliverable is `05_endpoint_files/bloodmeal_master_endpoint.tsv` (co
 and flagged, never silently dropped) and `host_call_table.tsv` (per sample/marker host calls with
 `mixed_status` = `single_host` / `mixed_host`). `06_reports/positive_control_check.tsv` reports
 whether each single-host positive control recovered its declared host. `07_figures/` holds
-eight publication-ready figures rendered from these tables (see [`docs/figures.md`](docs/figures.md)).
+nine publication-ready figures rendered from these tables (see [`docs/figures.md`](docs/figures.md)),
+and `05_endpoint_files/ecological_indices.tsv` reports the standard vector–host indices — Human Blood
+Index, zoophily, mixed-feeding rate, host diversity (see [`docs/ecological_indices.md`](docs/ecological_indices.md)).
 See [`docs/output.md`](docs/output.md) for how to read each file.
 
 > **Scientific caution:** host fractions are abundance **evidence summaries, not validated

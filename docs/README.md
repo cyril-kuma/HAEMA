@@ -6,6 +6,7 @@
 | [parameters.md](parameters.md) | Parameter reference (full list in `../nextflow_schema.json`). |
 | [output.md](output.md) | Output directory structure and how to interpret each file. |
 | [figures.md](figures.md) | Publication figures: what each shows, inputs, formats, and how to regenerate. |
+| [ecological_indices.md](ecological_indices.md) | Vector–host indices (HBI, zoophily, diversity): definitions, denominators, citations, caveats. |
 | [methods.md](methods.md) | Methods-section-ready description for a manuscript/thesis. |
 | [benchmarking.md](benchmarking.md) | Using lab-prepared mixed-host controls to benchmark/calibrate denoising. |
 | [limitations.md](limitations.md) | Scientific caveats; what is and isn't validated. |

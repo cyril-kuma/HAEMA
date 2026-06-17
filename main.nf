@@ -18,6 +18,7 @@ include { BUILD_REPORT } from './modules/local/report/main.nf'
 include { BUILD_R_OUTPUTS } from './modules/local/r_outputs/main.nf'
 include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
+include { ECOLOGICAL_INDICES } from './modules/local/ecological_indices/main.nf'
 include { BUILD_FIGURES } from './modules/local/figures/main.nf'
 include { BUILD_RUN_MANIFEST } from './modules/local/run_manifest/main.nf'
 
@@ -187,6 +188,14 @@ workflow {
         ? RAMBO_MIXED_MODEL.out.control_check
         : channel.fromPath("${projectDir}/assets/NO_FILE")
 
+    // Vector-host ecological indices (Human Blood Index, zoophily, feeding-type partition,
+    // mixed-feeding rate, host-specific blood indices, host diversity) from the host calls.
+    // Needs the RAMBO host-call layer; availability-dependent indices (forage ratio) are not
+    // computed (no host census) — see docs/ecological_indices.md.
+    if (params.enable_rambo_model) {
+        ECOLOGICAL_INDICES(RAMBO_MIXED_MODEL.out.host_calls, AGGREGATE_RESULTS.out.master_endpoint)
+    }
+
     BUILD_REPORT(
         AGGREGATE_RESULTS.out.master_endpoint,
         AGGREGATE_RESULTS.out.sample_summary,
@@ -227,6 +236,7 @@ workflow {
                 .mix(RAMBO_MIXED_MODEL.out.host_calls)
                 .mix(RAMBO_MIXED_MODEL.out.summary)
                 .mix(RAMBO_MIXED_MODEL.out.control_check)
+                .mix(ECOLOGICAL_INDICES.out.indices)
         }
         if (params.enable_r_outputs) {
             ch_figure_inputs = ch_figure_inputs

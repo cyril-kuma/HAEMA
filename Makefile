@@ -24,9 +24,10 @@ pycompile:  ## Byte-compile all bin/*.py and tests/*.py
 	python3 -m py_compile bin/*.py tests/*.py && echo "python: OK"
 
 .PHONY: unit
-unit:  ## Run python unit tests (validation, positive-control, LCA, taxid assignment)
+unit:  ## Run python unit tests (validation, positive-control, LCA, taxid, ecological indices)
 	python3 tests/test_validation.py && python3 tests/test_positive_controls.py \
-	  && python3 tests/test_lca.py && python3 tests/test_taxid_assignment.py
+	  && python3 tests/test_lca.py && python3 tests/test_taxid_assignment.py \
+	  && python3 tests/test_ecological_indices.py
 
 .PHONY: schema
 schema:  ## Validate nextflow_schema.json is valid JSON
