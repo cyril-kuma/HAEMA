@@ -15,6 +15,7 @@ results/<run>/07_figures/
 ├── figure_07_controls_contamination.{pdf,svg,png}
 ├── figure_08_ecology.{pdf,svg,png}
 ├── figure_09_ecological_indices.{pdf,svg,png}
+├── figure_10_temporal.{pdf,svg,png}
 ├── figure_captions.md      # draft captions, naming the input file(s) for each figure
 └── figure_manifest.tsv     # figure → files → inputs → caption (machine-readable)
 ```
@@ -42,6 +43,7 @@ colour in every figure.
 | **7 · Controls & contamination** | Positive-control host recovery (expected vs recovered, status); phyloseq/decontam summary and per-marker negative-control background. | `positive_control_check.tsv`, `contamination_model_summary.tsv`, `qc_background_thresholds.tsv` |
 | **8 · Ecology** | Host detections stratified by ecological zone and by *Anopheles gambiae* s.l. sibling species (per-group n shown). | `bloodmeal_master_endpoint.tsv` |
 | **9 · Ecological indices** | Human Blood Index & zoophily forest plot (Wilson 95% CI), feeding-type partition, and host diversity, stratified by zone and sibling species. | `ecological_indices.tsv` |
+| **10 · Temporal** | Sampling timeline, HBI & mixed-feeding per collection campaign (Wilson CI), and feeding-type composition over time — **descriptive only** (campaigns confounded with site/batch). | `ecological_indices.tsv` |
 
 Full draft captions (with the exact input files) are written to `07_figures/figure_captions.md` on
 every run.

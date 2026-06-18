@@ -48,12 +48,14 @@ blood meals containing human; Garrett-Jones, 1964), the complementary animal/zoo
 human-only/mixed/animal-only feeding-type partition, the mixed-feeding rate (≥2 host taxa),
 host-specific blood indices, and host-community diversity (richness, Shannon, Gini–Simpson, Pielou
 evenness), each with Wilson score 95% confidence intervals and reported overall and stratified by
-ecological zone and `[sibling_species]`. Availability-dependent selection indices (forage ratio,
-Hess et al., 1968; Kay feeding index) were not computed as no host-availability census was collected.
+ecological zone, vector sibling species, and collection period/season. Because sampling was
+opportunistic and each collection campaign coincided with a distinct site and sequencing batch, the
+temporal/seasonal strata are reported descriptively and are confounded with location and batch; no
+temporal trend or seasonal-effect test was performed.
 
 Final outputs included a per-feature master table, host-call tables, an ASV count matrix, the
 ecological-indices table, phyloseq (McMurdie & Holmes, 2013) objects for downstream ecological
-analysis, a MultiQC report (Ewels et al., 2016), nine publication figures, and a machine-readable
+analysis, a MultiQC report (Ewels et al., 2016), ten publication figures, and a machine-readable
 run manifest of parameters and container digests.
 
 ## Reproducibility
@@ -72,6 +74,5 @@ images, and execution traces are recorded in `run_manifest.json` and `pipeline_i
 - Ewels P, et al. MultiQC. *Bioinformatics*. 2016.
 - Garrett-Jones C. The human blood index of malaria vectors… *Bull World Health Organ*. 1964;30:241–261.
 - Orsborne J, et al. Using the human blood index to investigate host biting plasticity… *Malar J*. 2018;17:479.
-- Hess AD, Hayes RO, Tempelis CH. The forage ratio technique in mosquito host preference studies. *Mosq News*. 1968;28:386–389.
 
 > Verify every citation and the exact tool versions against the images you ran before submission.

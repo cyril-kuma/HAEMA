@@ -4,6 +4,30 @@ All notable changes to the HÆMA pipeline are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+- **Temporal / seasonal ecological-index strata + Figure 10.** `ECOLOGICAL_INDICES` now also
+  stratifies every index by **collection period** (year-month, from `--eco_index_date_column`) and
+  **season** (wet/dry, `--eco_index_wet_months`, default Apr–Oct). Figure 10 shows the sampling
+  timeline, HBI & mixed-feeding per campaign (Wilson CIs), and feeding-type composition over time.
+  Sampling is opportunistic and each campaign is a distinct site **and** sequencing batch, so these
+  strata are **descriptive only** (confounded with place/batch; no trend or seasonal-effect test) —
+  stated in the figure, caption, and docs.
+
+### Changed
+- **Medaka is now resilient.** `MEDAKA_POLISH` no longer aborts the run on a single failure: clusters
+  below `--medaka_min_reads` (default 10) skip polishing and keep their unpolished consensus, and any
+  Medaka error/empty output falls back to the unpolished consensus (recorded in the per-cluster
+  `status`). This fixes whole-run aborts seen when a low-read (e.g. negative-control) cluster's
+  polishing was killed/failed.
+
+### Removed
+- **Scrubbed the host-availability / forage-ratio scaffolding.** No host-availability census was
+  collected, so the forage ratio / Kay feeding index "excluded/future-work" notes are removed from
+  the code, JSON, figure captions, and docs — the ecological-index layer now presents only what the
+  data support.
+
 ## [0.4.0] - 2026-06-17
 
 ### Added

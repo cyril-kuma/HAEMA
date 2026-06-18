@@ -13,8 +13,9 @@ host-call model runs) and written to:
 All indices are computed **per mosquito** (a sample), with hosts **unioned across the three markers**
 and **controls excluded**. Proportions carry **Wilson score 95% confidence intervals** (valid at the
 small n typical of stratified blood-meal data, unlike the normal/Wald interval). Estimates are
-reported **overall** and stratified by **ecological zone** (`--eco_index_zone_column`) and **vector
-sibling species** (`--eco_index_species_column`).
+reported **overall** and stratified by **ecological zone** (`--eco_index_zone_column`), **vector
+sibling species** (`--eco_index_species_column`), **collection period** (year-month, from
+`--eco_index_date_column`), and **season** (wet/dry, `--eco_index_wet_months`, default Apr–Oct).
 
 ## Indices computed
 
@@ -26,14 +27,6 @@ sibling species** (`--eco_index_species_column`).
 | **Mixed-feeding (multiple-blood-meal) rate** | proportion feeding on ≥2 distinct host taxa | Mixed feeding underpins this pipeline's purpose. |
 | **Host-specific blood indices** | proportion of meals **containing** each host taxon (bovine, ovine, caprine, canine, …) | Do **not** sum to 1 (a mixed meal is counted under each host it contains). |
 | **Host-community diversity** | richness *S*, Shannon *H′*, Gini–Simpson (1−*D*), Pielou evenness *J′* | Computed on **mosquito incidence** per host, not read fractions. Shannon 1948; Simpson 1949; Pielou 1966; Levins 1968 (niche breadth). |
-
-### Deliberately **not** computed (and why)
-- **Forage ratio** (Hess et al. 1968) and the **Kay feeding index** (Kay et al. 1979) are *defined
-  relative to host availability* — they need a census of human and animal hosts in the study area.
-  HÆMA has no such census, so computing them would be a category error. They are flagged in the
-  JSON `excluded` list and are documented future work (collect a host-availability survey per site).
-- **Vectorial capacity** and the **Macdonald stability index** need biting rate and vector survival,
-  which this pipeline does not measure.
 
 ## How indices are defined here (the choices that matter)
 
@@ -56,11 +49,16 @@ sibling species** (`--eco_index_species_column`).
 2. **Small per-stratum n.** Zone/species strata have n≈5–14, so confidence intervals are wide and
    strata flagged `small_n`. These are **descriptive**, not formal hypothesis tests; no pairwise
    significance testing is performed (it would be subgroup-fishing at this n). Mosquitoes from the
-   same site are not fully independent (shared host availability).
+   same site/campaign are not fully independent (shared local conditions).
 3. **Ecological framing.** A meta-regression of the three major African vectors found HBI tracks
    **collection location more strongly than sibling species** (Orsborne et al. 2018, *Malar J* 17:479,
    location R²=0.29 vs species R²=0.11) — so read the zone stratification as primary and the
    species stratification as exploratory.
+4. **Temporal strata are confounded.** Sampling was opportunistic across a few campaigns spanning
+   several years, and **each campaign is also a different site and sequencing batch**. The
+   collection-period and season strata (and Figure 10) therefore describe *variation across
+   campaigns* — they are **not** a temporal trend or an isolated seasonal effect, and no trend test
+   is performed. The wet/dry split is a coarse label (Ghana's rainfall is regionally bimodal).
 
 ## Demonstration run (Ghana, 26 host-identified field mosquitoes)
 
@@ -87,8 +85,5 @@ python3 pipeline/bin/compute_ecological_indices.py \
 ## Key references
 - Garrett-Jones C. The human blood index of malaria vectors… *Bull World Health Organ*. 1964;30:241–261.
 - Orsborne J, et al. Using the human blood index to investigate host biting plasticity… *Malar J*. 2018;17:479.
-- Hess AD, Hayes RO, Tempelis CH. The use of the forage ratio technique in mosquito host preference studies. *Mosq News*. 1968;28:386–389.
-- Kay BH, Boreham PFL, Edman JD. Application of the "feeding index" concept… *Mosq News*. 1979;39:68–72.
 - Levins R. *Evolution in Changing Environments*. Princeton; 1968 (niche breadth).
-- Pianka ER. The structure of lizard communities. *Annu Rev Ecol Syst*. 1973;4:53–74 (niche overlap).
 - Shannon CE (1948); Simpson EH (1949); Pielou EC (1966) — diversity indices.

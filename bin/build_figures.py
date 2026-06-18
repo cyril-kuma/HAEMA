@@ -887,9 +887,96 @@ def fig_ecological_indices(idx, outdir, formats, manifest):
                "community diversity (Shannon H′; richness S annotated) by mosquito incidence. Indices "
                "are molecular detection-based and bounded by panel coverage and denoising sensitivity; "
                "small per-stratum n give wide intervals and these strata are descriptive, not formal "
-               "tests. Availability-dependent indices (forage ratio, Kay feeding index) are not "
-               "computed (no host census). Input: ecological_indices.tsv.")
+               "tests. Input: ecological_indices.tsv.")
     return save_figure(fig, outdir, "figure_09_ecological_indices", formats, manifest, caption,
+                       ["ecological_indices.tsv"])
+
+
+# --------------------------------------------------------------------------------------
+# Figure 10 — temporal (descriptive across sampling campaigns; time is confounded with site/batch)
+# --------------------------------------------------------------------------------------
+def fig_temporal(idx, outdir, formats, manifest, wet_months=frozenset({4, 5, 6, 7, 8, 9, 10})):
+    if idx.empty:
+        print("  [skip] figure 10: no ecological_indices.tsv")
+        return []
+    periods = sorted(idx[idx["stratum_type"] == "collection_period"]["stratum"].unique())
+    if len(periods) < 2:
+        print("  [skip] figure 10: <2 collection periods (no temporal contrast)")
+        return []
+
+    def season_of(period):
+        try:
+            return "wet" if int(period.split("-")[1]) in wet_months else "dry"
+        except (ValueError, IndexError):
+            return "dry"
+    season_col = {"wet": "#2A9D8F", "dry": "#E9C46A"}
+
+    fig, (axA, axB, axC) = plt.subplots(3, 1, figsize=(9.0, 8.4), sharex=True)
+    x = np.arange(len(periods))
+
+    # ---- A: sampling effort per campaign, coloured by season ----
+    n_id = [_eco_get(idx, "collection_period", p, "n_identified") or 0 for p in periods]
+    axA.bar(x, n_id, color=[season_col[season_of(p)] for p in periods], width=0.72)
+    for xi, v in zip(x, n_id):
+        axA.text(xi, v + 0.1, str(int(v)), ha="center", va="bottom", fontsize=7)
+    axA.set_ylabel("Mosquitoes\n(host-identified)")
+    axA.set_title("Sampling campaigns over time (opportunistic, multi-year)", loc="left")
+    axA.legend(handles=[plt.Rectangle((0, 0), 1, 1, color=season_col[s]) for s in ("wet", "dry")],
+               labels=["wet season (Apr–Oct)", "dry season (Nov–Mar)"], loc="upper right", fontsize=7)
+    panel_label(axA, "A", dx=-0.04, dy=1.12)
+
+    # ---- B: HBI & mixed-feeding rate per campaign, Wilson CIs ----
+    for metric, color, off, name in [("human_blood_index", "#0072B2", -0.08, "Human Blood Index"),
+                                     ("mixed_feeding_rate", "#7E57C2", 0.08, "mixed-feeding rate")]:
+        vs, los, his = [], [], []
+        for p in periods:
+            v = _eco_get(idx, "collection_period", p, metric)
+            lo = _eco_get(idx, "collection_period", p, metric, "ci_low")
+            hi = _eco_get(idx, "collection_period", p, metric, "ci_high")
+            vs.append(np.nan if v is None else v)
+            los.append(v if lo is None else lo)
+            his.append(v if hi is None else hi)
+        vs = np.array(vs, float)
+        yerr = [vs - np.array(los, float), np.array(his, float) - vs]
+        axB.errorbar(x + off, vs, yerr=yerr, fmt="o-", color=color, ms=5, capsize=2.5, lw=1.2,
+                     markeredgecolor="white", markeredgewidth=0.5, label=name)
+    axB.set_ylim(-0.03, 1.08)
+    axB.set_ylabel("Index (Wilson 95% CI)")
+    axB.set_title("Human Blood Index & mixed-feeding by campaign", loc="left")
+    axB.legend(loc="lower left", fontsize=7, ncol=2)
+    panel_label(axB, "B", dx=-0.04, dy=1.12)
+
+    # ---- C: feeding-type composition per campaign ----
+    cats = [("human_only_fraction", "#0072B2", "human only"),
+            ("mixed_human_animal_fraction", "#7E57C2", "mixed human+animal"),
+            ("animal_only_fraction", "#E69F00", "animal only")]
+    bottom = np.zeros(len(periods))
+    for metric, color, name in cats:
+        vals = np.array([_eco_get(idx, "collection_period", p, metric) or 0.0 for p in periods])
+        axC.bar(x, vals, bottom=bottom, color=color, width=0.72, label=name, edgecolor="white",
+                linewidth=0.5)
+        bottom += vals
+    axC.set_ylim(0, 1.0)
+    axC.set_ylabel("Fraction of meals")
+    axC.set_title("Feeding-type composition by campaign", loc="left")
+    axC.set_xticks(x)
+    axC.set_xticklabels([f"{p}\n({season_of(p)})" for p in periods], fontsize=7.4)
+    axC.legend(loc="lower center", bbox_to_anchor=(0.5, -0.5), ncol=3, fontsize=6.8)
+    panel_label(axC, "C", dx=-0.04, dy=1.12)
+
+    fig.text(0.5, 0.005, "Caution: each campaign is a different place, time and sequencing batch — "
+             "variation is descriptive, not a temporal/seasonal effect.", ha="center",
+             fontsize=7.2, style="italic", color="#A33")
+    fig.tight_layout(rect=[0, 0.03, 1, 1])
+    caption = ("Figure 10. Blood-meal host use across sampling campaigns. (A) Host-identified mosquitoes "
+               "per collection period (year-month), coloured by season (wet Apr–Oct / dry Nov–Mar). "
+               "(B) Human Blood Index and mixed-feeding rate per campaign with Wilson 95% CIs. "
+               "(C) Feeding-type composition per campaign. Sampling was opportunistic over 2021–2025 "
+               "and each campaign corresponds to a different site and sequencing batch, so temporal "
+               "variation is **confounded with place and batch** and is shown as description, not a "
+               "seasonal effect or trend; per-campaign n is small (wide intervals). Input: "
+               "ecological_indices.tsv.")
+    return save_figure(fig, outdir, "figure_10_temporal", formats, manifest, caption,
                        ["ecological_indices.tsv"])
 
 
@@ -937,6 +1024,7 @@ def main():
          lambda: fig_controls_contam(control_check, contam_summary, qc_bg, outdir, formats, manifest)),
         ("figure_08_ecology", lambda: fig_ecology(master, outdir, formats, manifest)),
         ("figure_09_ecological_indices", lambda: fig_ecological_indices(eco_idx, outdir, formats, manifest)),
+        ("figure_10_temporal", lambda: fig_temporal(eco_idx, outdir, formats, manifest)),
     ]
     failures = 0
     for name, fn in figures:

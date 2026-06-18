@@ -77,7 +77,7 @@ denoising thresholds with it.
 - `bloodmeal_pipeline_report.html` — human-readable run summary (primary interpretation report).
 
 ## Figures you can drop into a manuscript (`07_figures/`)
-The `BUILD_FIGURES` step renders nine publication-ready figures (workflow schematic, sequencing/QC,
+The `BUILD_FIGURES` step renders ten publication-ready figures (workflow schematic, sequencing/QC,
 depth & denoising, host assignment, per-sample host composition, mixed-host feeding, controls &
 contamination, ecological stratification, and vector–host ecological indices) as **PDF + SVG + 300
 dpi PNG**, plus `figure_captions.md` (draft captions naming each figure's input files) and

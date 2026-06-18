@@ -21,6 +21,8 @@ process ECOLOGICAL_INDICES {
         --master-endpoint '${master_endpoint}' \\
         --zone-column '${params.eco_index_zone_column}' \\
         --species-column '${params.eco_index_species_column}' \\
+        --date-column '${params.eco_index_date_column}' \\
+        --wet-months '${params.eco_index_wet_months}' \\
         --output-tsv ecological_indices.tsv \\
         --output-json ecological_indices_summary.json
 
@@ -34,7 +36,7 @@ process ECOLOGICAL_INDICES {
     """
     printf 'stratum_type\\tstratum\\tmetric\\tvalue\\tci_low\\tci_high\\tn\\tdetail\\n' > ecological_indices.tsv
     printf 'overall\\tall_field_samples\\thuman_blood_index\\t0\\t0\\t0\\t0\\tstub\\n' >> ecological_indices.tsv
-    printf '{"indices": {}, "excluded": ["forage_ratio"]}\\n' > ecological_indices_summary.json
+    printf '{"indices": {}}\\n' > ecological_indices_summary.json
     cat > versions.yml <<-END
     "${task.process}":
       stub: true

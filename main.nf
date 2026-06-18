@@ -189,9 +189,9 @@ workflow {
         : channel.fromPath("${projectDir}/assets/NO_FILE")
 
     // Vector-host ecological indices (Human Blood Index, zoophily, feeding-type partition,
-    // mixed-feeding rate, host-specific blood indices, host diversity) from the host calls.
-    // Needs the RAMBO host-call layer; availability-dependent indices (forage ratio) are not
-    // computed (no host census) — see docs/ecological_indices.md.
+    // mixed-feeding rate, host-specific blood indices, host diversity) from the host calls,
+    // stratified by ecological zone, vector sibling species, and collection period
+    // (needs the RAMBO host-call layer) — see docs/ecological_indices.md.
     if (params.enable_rambo_model) {
         ECOLOGICAL_INDICES(RAMBO_MIXED_MODEL.out.host_calls, AGGREGATE_RESULTS.out.master_endpoint)
     }

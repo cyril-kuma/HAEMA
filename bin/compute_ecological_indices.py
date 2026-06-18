@@ -2,8 +2,7 @@
 """Compute vector-host ecological indices from HÆMA blood-meal host calls.
 
 Standard malaria-vector blood-meal-ecology indices, computed strictly from molecular host
-detections (no host-availability census is assumed — so availability-dependent indices such as the
-forage ratio and Kay feeding index are deliberately *not* computed; see the module docs).
+detections, per mosquito (hosts unioned across markers, controls excluded).
 
 Indices (per mosquito = sample, hosts unioned across the three markers, controls excluded):
   - Human Blood Index (HBI): proportion of host-identified mosquitoes whose blood meal contains
@@ -22,8 +21,7 @@ are reported overall and stratified by ecological zone and vector sibling specie
 descriptive (small n), not formal tests.
 
 References: Garrett-Jones (1964) Bull WHO; Orsborne et al. (2018) Malar J 17:479 (HBI meta-
-regression: HBI tracks location > sibling species); Hess et al. (1968) forage ratio (excluded:
-needs host census); Levins (1968) niche breadth; Pianka (1973) niche overlap; Shannon (1948);
+regression: HBI tracks location > sibling species); Levins (1968) niche breadth; Shannon (1948);
 Simpson (1949); Pielou (1966).
 """
 import argparse
@@ -44,6 +42,23 @@ def read_tsv(path):
         return []
     with p.open(newline="") as fh:
         return list(csv.DictReader(fh, delimiter="\t"))
+
+
+def parse_year_month(s):
+    """Parse a collection date to (year, month). Accepts DD/MM/YYYY and YYYY-MM-DD; else None."""
+    s = (s or "").strip()
+    if not s:
+        return None
+    try:
+        if "/" in s:  # DD/MM/YYYY
+            d, m, y = s.split("/")[:3]
+            return (int(y), int(m))
+        if "-" in s:  # YYYY-MM-DD
+            y, m, _d = s.split("-")[:3]
+            return (int(y), int(m))
+    except (ValueError, IndexError):
+        return None
+    return None
 
 
 def wilson_ci(x, n, z=Z):
@@ -151,6 +166,9 @@ def main():
     ap.add_argument("--master-endpoint", default="", help="bloodmeal_master_endpoint.tsv (for strata metadata)")
     ap.add_argument("--zone-column", default="collection_region", help="ecological-zone metadata column")
     ap.add_argument("--species-column", default="sibling_species", help="vector sibling-species column")
+    ap.add_argument("--date-column", default="collection_date", help="collection-date column (temporal strata)")
+    ap.add_argument("--wet-months", default="4,5,6,7,8,9,10",
+                    help="comma-separated month numbers treated as the wet season (default Apr-Oct)")
     ap.add_argument("--output-tsv", required=True)
     ap.add_argument("--output-json", default="")
     args = ap.parse_args()
@@ -159,20 +177,35 @@ def main():
     host_sets = per_mosquito_hosts(host_rows)
     all_uids = list(host_sets.keys())
 
-    # map sample_uid -> strata metadata from the master endpoint (one value per uid)
-    zone_of, species_of = {}, {}
+    # map sample_uid -> strata metadata from the master endpoint (one value per uid). Temporal
+    # strata (collection period / season) come from the collection date. NB: collection campaigns
+    # are confounded with site and sequencing batch, so temporal strata are descriptive only.
+    wet_months = {int(m) for m in str(args.wet_months).split(",") if m.strip().isdigit()}
+    zone_of, species_of, period_of, season_of = {}, {}, {}, {}
     for r in read_tsv(args.master_endpoint):
         if r.get("sample_type") != "sample":
             continue
         uid = r.get("sample_uid", "")
-        if uid:
-            zone_of.setdefault(uid, (r.get(args.zone_column) or "").strip())
-            species_of.setdefault(uid, (r.get(args.species_column) or "").strip())
+        if not uid or uid in zone_of:
+            continue
+        zone_of[uid] = (r.get(args.zone_column) or "").strip()
+        species_of[uid] = (r.get(args.species_column) or "").strip()
+        ym = parse_year_month(r.get(args.date_column, ""))
+        if ym:
+            year, month = ym
+            period_of[uid] = f"{year:04d}-{month:02d}"
+            season_of[uid] = "wet" if month in wet_months else "dry"
 
     rows = []
     rows += index_block(all_uids, host_sets, "overall", "all_field_samples")
-    for label, mapping in (("ecological_zone", zone_of), ("sibling_species", species_of)):
-        levels = sorted({v for v in mapping.values() if v})
+    # (label, uid->level map, explicit level order or None -> sort). collection_period sorts
+    # chronologically as YYYY-MM strings; season is ordered wet then dry.
+    for label, mapping, order in (("ecological_zone", zone_of, None),
+                                  ("sibling_species", species_of, None),
+                                  ("collection_period", period_of, None),
+                                  ("season", season_of, ["wet", "dry"])):
+        present = {v for v in mapping.values() if v}
+        levels = [l for l in (order or []) if l in present] + sorted(present - set(order or []))
         for lv in levels:
             uids = [u for u in all_uids if mapping.get(u) == lv]
             if uids:
@@ -190,11 +223,7 @@ def main():
             nested[f"{r['stratum_type']}:{r['stratum']}"][r["metric"]] = {
                 "value": r["value"], "ci_low": r["ci_low"], "ci_high": r["ci_high"], "n": r["n"]}
         with open(args.output_json, "w") as fh:
-            json.dump({"indices": nested,
-                       "excluded": ["forage_ratio", "kay_feeding_index", "manly_selection",
-                                    "vectorial_capacity"],
-                       "excluded_reason": "require host-availability census or survival/biting-rate "
-                                          "data not collected by this pipeline"}, fh, indent=2)
+            json.dump({"indices": nested}, fh, indent=2)
 
     overall = [r for r in rows if r["stratum_type"] == "overall"]
     hbi = next((r for r in overall if r["metric"] == "human_blood_index"), None)

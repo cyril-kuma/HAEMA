@@ -268,6 +268,11 @@
                     "type": "string",
                     "default": "",
                     "description": "Additional arguments passed to medaka_consensus."
+                },
+                "medaka_min_reads": {
+                    "type": "integer",
+                    "default": 10,
+                    "description": "Clusters with fewer reads than this skip Medaka polishing (kept as the unpolished consensus). Polishing a handful of reads is meaningless and crash-prone."
                 }
             }
         },
@@ -465,6 +470,16 @@
                     "type": "string",
                     "default": "sibling_species",
                     "description": "Samplesheet column used as the vector sibling-species stratifier for ecological indices."
+                },
+                "eco_index_date_column": {
+                    "type": "string",
+                    "default": "collection_date",
+                    "description": "Samplesheet column holding the collection date (DD/MM/YYYY or YYYY-MM-DD) for the temporal/seasonal ecological-index strata."
+                },
+                "eco_index_wet_months": {
+                    "type": "string",
+                    "default": "4,5,6,7,8,9,10",
+                    "description": "Comma-separated month numbers treated as the wet season for the seasonal stratum (default Apr-Oct). Coarse label; collection campaigns are confounded with site/batch."
                 },
                 "enable_figures": {
                     "type": "boolean",

@@ -93,9 +93,18 @@ def test_diversity_single_vs_even():
     print("diversity single/even test PASSED")
 
 
+def test_parse_year_month():
+    assert eco.parse_year_month("17/05/2024") == (2024, 5), "DD/MM/YYYY"
+    assert eco.parse_year_month("2023-11-28") == (2023, 11), "YYYY-MM-DD"
+    for bad in ("", "  ", "not-a-date", "2024", None):
+        assert eco.parse_year_month(bad) is None, f"bad date {bad!r} -> None"
+    print("date-parsing test PASSED")
+
+
 if __name__ == "__main__":
     test_marker_union_and_control_exclusion()
     test_hbi_mixed_counting_and_partition()
     test_wilson_ci_bounds()
     test_diversity_single_vs_even()
+    test_parse_year_month()
     print("ecological-index tests PASSED (union, HBI mixed-counting, partition, Wilson CI, diversity)")
