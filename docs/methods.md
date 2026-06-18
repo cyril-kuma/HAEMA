@@ -55,8 +55,10 @@ temporal trend or seasonal-effect test was performed.
 
 Final outputs included a per-feature master table, host-call tables, an ASV count matrix, the
 ecological-indices table, phyloseq (McMurdie & Holmes, 2013) objects for downstream ecological
-analysis, a MultiQC report (Ewels et al., 2016), ten publication figures, and a machine-readable
-run manifest of parameters and container digests.
+analysis, a MultiQC report (Ewels et al., 2016), and a machine-readable run manifest of parameters
+and container digests. The phyloseq object was visualised directly (composition, alpha- and
+beta-diversity ordination, host × sample heatmap, and a decontam prevalence diagnostic), giving
+ten table-derived figures plus five phyloseq-native figures.
 
 ## Reproducibility
 

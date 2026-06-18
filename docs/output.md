@@ -44,7 +44,8 @@ The RAMBO-style abundance/evidence layer. One row per retained host per sample/m
 - `sample_level_summary.tsv` / `marker_level_summary.tsv` — per-sample / per-marker rollups.
 - `contamination_flags.tsv` — features flagged against negative-control background.
 - `bloodmeal_phyloseq.rds`, `bloodmeal_ecology_data.rds`, `*_decontaminated.rds` — R objects
-  (formal phyloseq/decontam with `haema-r`, documented fallback objects otherwise).
+  (formal phyloseq/decontam with `haema-r`, documented fallback objects otherwise). The phyloseq
+  object is visualised directly by the `PHYLOSEQ_FIGURES` step (figures 11–15 in `07_figures/`).
 - `run_manifest.json` — parameters, container images, output paths, workflow session — your
   provenance record for the methods section.
 
@@ -82,7 +83,9 @@ depth & denoising, host assignment, per-sample host composition, mixed-host feed
 contamination, ecological stratification, and vector–host ecological indices) as **PDF + SVG + 300
 dpi PNG**, plus `figure_captions.md` (draft captions naming each figure's input files) and
 `figure_manifest.tsv`. Every panel is built from the tables above — see [`figures.md`](figures.md) for
-what each shows and how to regenerate them.
+what each shows and how to regenerate them. The `PHYLOSEQ_FIGURES` step adds five **phyloseq-native**
+figures (11–15: composition, alpha/beta diversity, heatmap, decontam) rendered in R from
+`bloodmeal_phyloseq.rds` (PDF + PNG).
 
 The `ECOLOGICAL_INDICES` step writes `05_endpoint_files/ecological_indices.tsv` (Human Blood Index,
 zoophily, feeding-type partition, mixed-feeding rate, host-specific blood indices, and host diversity

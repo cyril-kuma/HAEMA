@@ -7,6 +7,17 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **Phyloseq-native figures (`PHYLOSEQ_FIGURES`, figures 11–15).** The `bloodmeal_phyloseq.rds`
+  object is now visualised directly with phyloseq + ggplot2 (vector PDF + 300 dpi PNG), not just
+  emitted as a downstream-analysis deliverable: (11) host-community composition by ecological zone,
+  (12) alpha diversity (Observed + Shannon, hosts only), (13) PCoA Bray–Curtis ordination by zone,
+  (14) host × sample read-abundance heatmap, (15) decontam prevalence diagnostic (per-ASV negative-
+  control vs field-sample prevalence, contaminant flagged). ASVs are agglomerated to
+  `host_assignment`; controls are excluded from the ecological views; alpha-diversity is framed as
+  low-resolution "host breadth" and ordination as descriptive (majority-host, not a gradient). Runs
+  in the R container and **no-ops cleanly** when the `.rds` is an R-fallback (non-phyloseq) object.
+  Driven by [`bin/build_phyloseq_figures.R`](bin/build_phyloseq_figures.R); documented in
+  [`docs/figures.md`](docs/figures.md).
 - **Temporal / seasonal ecological-index strata + Figure 10.** `ECOLOGICAL_INDICES` now also
   stratifies every index by **collection period** (year-month, from `--eco_index_date_column`) and
   **season** (wet/dry, `--eco_index_wet_months`, default Apr–Oct). Figure 10 shows the sampling

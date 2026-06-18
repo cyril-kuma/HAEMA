@@ -20,6 +20,7 @@ include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
 include { ECOLOGICAL_INDICES } from './modules/local/ecological_indices/main.nf'
 include { BUILD_FIGURES } from './modules/local/figures/main.nf'
+include { PHYLOSEQ_FIGURES } from './modules/local/phyloseq_figures/main.nf'
 include { BUILD_RUN_MANIFEST } from './modules/local/run_manifest/main.nf'
 
 // Schema-based validation, grouped --help, and a run-parameter summary (nf-schema plugin).
@@ -244,6 +245,12 @@ workflow {
                 .mix(BUILD_R_OUTPUTS.out.thresholds)
         }
         BUILD_FIGURES(ch_figure_inputs.collect())
+
+        // phyloseq-native figures (composition, alpha/beta diversity, decontam) from the phyloseq
+        // object. Runs in the R container; no-ops cleanly if the .rds is an R-fallback object.
+        if (params.enable_r_outputs) {
+            PHYLOSEQ_FIGURES(BUILD_R_OUTPUTS.out.phyloseq, BUILD_R_OUTPUTS.out.decontam)
+        }
     }
 
     BUILD_RUN_MANIFEST(

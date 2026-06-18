@@ -16,8 +16,15 @@ results/<run>/07_figures/
 ├── figure_08_ecology.{pdf,svg,png}
 ├── figure_09_ecological_indices.{pdf,svg,png}
 ├── figure_10_temporal.{pdf,svg,png}
-├── figure_captions.md      # draft captions, naming the input file(s) for each figure
-└── figure_manifest.tsv     # figure → files → inputs → caption (machine-readable)
+├── figure_11_phyloseq_composition.{pdf,png}     # phyloseq-native (R) — PDF + PNG
+├── figure_12_phyloseq_alpha_diversity.{pdf,png}
+├── figure_13_phyloseq_ordination.{pdf,png}
+├── figure_14_phyloseq_heatmap.{pdf,png}
+├── figure_15_phyloseq_decontam.{pdf,png}
+├── figure_captions.md            # captions for the Python figures (01–10)
+├── figure_manifest.tsv
+├── phyloseq_figure_captions.md   # captions for the phyloseq figures (11–15)
+└── phyloseq_figure_manifest.tsv
 ```
 
 Each figure is exported as **vector PDF and SVG** (editable text — `svg.fonttype=none`,
@@ -44,6 +51,20 @@ colour in every figure.
 | **8 · Ecology** | Host detections stratified by ecological zone and by *Anopheles gambiae* s.l. sibling species (per-group n shown). | `bloodmeal_master_endpoint.tsv` |
 | **9 · Ecological indices** | Human Blood Index & zoophily forest plot (Wilson 95% CI), feeding-type partition, and host diversity, stratified by zone and sibling species. | `ecological_indices.tsv` |
 | **10 · Temporal** | Sampling timeline, HBI & mixed-feeding per collection campaign (Wilson CI), and feeding-type composition over time — **descriptive only** (campaigns confounded with site/batch). | `ecological_indices.tsv` |
+
+### phyloseq-native figures (R, `PHYLOSEQ_FIGURES`)
+Built directly from `bloodmeal_phyloseq.rds` with **phyloseq + ggplot2** (vector PDF + 300 dpi PNG;
+SVG is only produced for the Python figures). ASVs are agglomerated to `host_assignment`; controls
+are excluded from the ecological views. This step runs in the R container and **no-ops cleanly** if
+the object is an R-fallback (non-phyloseq) `.rds`.
+
+| Figure | Shows | Built from |
+|---|---|---|
+| **11 · Composition** | `plot_bar` relative host abundance per field sample, faceted by ecological zone. | `bloodmeal_phyloseq.rds` |
+| **12 · Alpha diversity** | `plot_richness` Observed + Shannon by zone — "host breadth" over ≤5 hosts (low-resolution; hosts only). | `bloodmeal_phyloseq.rds` |
+| **13 · Beta diversity** | `plot_ordination` PCoA (Bray–Curtis) by zone — **descriptive**, separation reflects majority host, not a gradient (skips if degenerate). | `bloodmeal_phyloseq.rds` |
+| **14 · Heatmap** | `plot_heatmap` host × sample read abundance (robust low-diversity companion to ordination). | `bloodmeal_phyloseq.rds` |
+| **15 · decontam** | Per-ASV prevalence in negative controls vs field samples, contaminant flagged — demonstrates the decontaminated object. | `bloodmeal_phyloseq.rds`, `decontam_results.tsv` |
 
 Full draft captions (with the exact input files) are written to `07_figures/figure_captions.md` on
 every run.
