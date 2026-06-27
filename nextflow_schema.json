@@ -490,6 +490,22 @@
                     "type": "string",
                     "default": "pdf,svg,png",
                     "description": "Comma-separated output formats for figures (any of pdf, svg, png)."
+                },
+                "enable_publication_figures": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Generate the streamlined, self-contained publication figure suite (5 main + supplementary, vector PDF/EPS, incl. the GADM bioclimatic-zone map) into results/figures/. Needs the geo-enabled figures_container (haema-figures:0.4.0); disabled by the test profile."
+                },
+                "publication_figures_dir": {
+                    "type": "string",
+                    "default": "<launchDir>/results/figures",
+                    "description": "Output directory for the curated publication figure suite (main/ + supplementary/).",
+                    "format": "directory-path"
+                },
+                "figure_bioclim_column": {
+                    "type": "string",
+                    "default": "bioclimatic_zone",
+                    "description": "Metadata column used to stratify the publication figures by bioclimatic zone."
                 }
             }
         },
@@ -569,8 +585,8 @@
                 },
                 "figures_container": {
                     "type": "string",
-                    "default": "haema-figures:0.3.0",
-                    "description": "Figure-generation container (matplotlib/seaborn). Build from containers/haema-figures/Dockerfile or push to a registry and pass its @sha256 digest, like haema-python/haema-r."
+                    "default": "haema-figures:0.4.0",
+                    "description": "Figure-generation container (matplotlib/seaborn/geopandas). Build from containers/haema-figures/Dockerfile or push to a registry and pass its @sha256 digest, like haema-python/haema-r."
                 }
             }
         }

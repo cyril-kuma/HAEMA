@@ -7,6 +7,13 @@ and the project aims to follow [Semantic Versioning](https://semver.org/spec/v2.
 ## [Unreleased]
 
 ### Added
+- **Curated Objective 1 publication figure suite (`PUBLICATION_FIGURES`).** A self-contained
+  figure branch now renders five main figures, supplementary figures, and plot-ready tables to
+  `--publication_figures_dir` (default `results/figures/`), including the Ghana GADM
+  bioclimatic-zone map and vector-host ecology tables (`vector_host_matrix.tsv`,
+  `host_ecology_indices.tsv`, Pianka overlap, Bray-Curtis turnover). The missing
+  `compute_host_ecology_indices.py` helper is now included and unit-tested. The figures image is
+  bumped to `haema-figures:0.4.0` to include the pinned geopandas stack.
 - **Phyloseq-native figures (`PHYLOSEQ_FIGURES`, figures 11–15).** The `bloodmeal_phyloseq.rds`
   object is now visualised directly with phyloseq + ggplot2 (vector PDF + 300 dpi PNG), not just
   emitted as a downstream-analysis deliverable: (11) host-community composition by ecological zone,

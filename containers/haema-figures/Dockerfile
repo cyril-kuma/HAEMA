@@ -4,8 +4,8 @@
 FROM python:3.11-slim-bookworm@sha256:e2d3af735aff6eeee600b1933bedd99da6645fedf572cc12ef4cc1331f2ceebe
 
 LABEL org.opencontainers.image.title="haema-figures"
-LABEL org.opencontainers.image.description="Matplotlib/seaborn runtime for HÆMA publication figures"
-LABEL org.opencontainers.image.version="0.3.0"
+LABEL org.opencontainers.image.description="Matplotlib/seaborn + geopandas runtime for HÆMA publication figures"
+LABEL org.opencontainers.image.version="0.4.0"
 
 # matplotlib needs a writable config/cache dir when the image runs as a non-root UID
 # (Nextflow uses -u uid:gid); without it the first import warns and can fail to cache fonts.
@@ -27,5 +27,13 @@ RUN pip install --no-cache-dir \
     matplotlib==3.9.2 \
     seaborn==0.13.2
 
-# Fail the build early if the visualisation stack cannot be imported.
-RUN python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot, seaborn, pandas, numpy; print('haema-figures deps OK')"
+# Geospatial stack for the Ghana bioclimatic-zone map (Figure 1A). pyogrio/shapely/pyproj ship
+# manylinux wheels that bundle GDAL/GEOS/PROJ, so no system GIS libraries are required.
+RUN pip install --no-cache-dir \
+    shapely==2.0.6 \
+    pyproj==3.7.0 \
+    pyogrio==0.10.0 \
+    geopandas==1.0.1
+
+# Fail the build early if the visualisation + geo stack cannot be imported.
+RUN python -c "import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot, seaborn, pandas, numpy, geopandas, shapely, pyproj; print('haema-figures 0.4.0 deps OK')"

@@ -69,6 +69,23 @@ the object is an R-fallback (non-phyloseq) `.rds`.
 Full draft captions (with the exact input files) are written to `07_figures/figure_captions.md` on
 every run.
 
+## Curated Objective 1 publication suite
+
+The `PUBLICATION_FIGURES` step (enabled with `--enable_publication_figures true`; on by default
+outside the `test` profile) writes a streamlined manuscript/thesis suite to
+`--publication_figures_dir` (default `results/figures/`):
+
+```text
+results/figures/
+├── main/              figure_1_study_system.{pdf,eps} ... figure_5_host_use_ecology.{pdf,eps}
+├── supplementary/     figure_S1_rarefaction.{pdf,eps}, figure_S2_*.{pdf,eps}, figure_B1_*.{pdf,eps}
+└── figure_data/       plot-ready TSVs, vector_host_matrix.tsv, host_ecology_indices.tsv
+```
+
+This suite adds the Ghana GADM bioclimatic-zone map and vector-host ecology panels (Levins niche
+breadth, Pianka overlap, Bray-Curtis turnover, network connectance / H2prime proxy). It needs the
+geo-enabled `haema-figures:0.4.0` image.
+
 ## How to (re)generate
 
 **As part of the pipeline** (default). `BUILD_FIGURES` runs after the endpoint/report steps; it only
@@ -78,13 +95,15 @@ consumes tables that exist, so figures needing host calls (5, 6) or R outputs (7
 ```bash
 --enable_figures true|false      # default true (off in -profile test)
 --figure_formats pdf,svg,png     # any subset
---figures_container haema-figures:0.3.0
+--enable_publication_figures true|false
+--publication_figures_dir results/figures
+--figures_container haema-figures:0.4.0
 ```
 
 **Standalone**, against an existing results directory (fast iteration, no full pipeline run):
 
 ```bash
-docker run --rm -u $(id -u):$(id -g) -v "$PWD":"$PWD" -w "$PWD" haema-figures:0.3.0 \
+docker run --rm -u $(id -u):$(id -g) -v "$PWD":"$PWD" -w "$PWD" haema-figures:0.4.0 \
   python pipeline/bin/build_figures.py \
     --endpoint-dir results/<run>/05_endpoint_files \
     --reports-dir  results/<run>/06_reports \
@@ -99,12 +118,12 @@ filename and **degrades gracefully**: a missing table skips its figure, and the 
 
 ## Container
 
-Figures use the project-specific **`haema-figures:0.3.0`** image (matplotlib + seaborn + pandas on a
-digest-pinned `python:3.11-slim` base — the same base as `haema-python`). Build it once, like the
-other two custom images:
+Figures use the project-specific **`haema-figures:0.4.0`** image (matplotlib + seaborn + geopandas
+on a digest-pinned `python:3.11-slim` base — the same base as `haema-python`). Build it once, like
+the other two custom images:
 
 ```bash
-docker build -t haema-figures:0.3.0 -f containers/haema-figures/Dockerfile .
+docker build -t haema-figures:0.4.0 -f containers/haema-figures/Dockerfile .
 ```
 
 For HPC/publication, push it to a registry and pass its immutable `@sha256:` digest via

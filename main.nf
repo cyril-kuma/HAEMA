@@ -20,6 +20,7 @@ include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
 include { ECOLOGICAL_INDICES } from './modules/local/ecological_indices/main.nf'
 include { BUILD_FIGURES } from './modules/local/figures/main.nf'
+include { PUBLICATION_FIGURES } from './modules/local/publication_figures/main.nf'
 include { PHYLOSEQ_FIGURES } from './modules/local/phyloseq_figures/main.nf'
 include { BUILD_RUN_MANIFEST } from './modules/local/run_manifest/main.nf'
 
@@ -39,7 +40,8 @@ workflow {
     log.info "Results directory : ${params.outdir}"
     log.info "Production mode    : ${params.production_mode}"
     log.info "Feature gates      : taxonomy=${!params.skip_taxonomy} denoise=${params.enable_mixed_denoising}(${params.mixed_denoise_backend}) " +
-             "medaka=${params.enable_medaka} rambo=${params.enable_rambo_model} r_outputs=${params.enable_r_outputs} multiqc=${params.enable_multiqc} figures=${params.enable_figures}"
+             "medaka=${params.enable_medaka} rambo=${params.enable_rambo_model} r_outputs=${params.enable_r_outputs} multiqc=${params.enable_multiqc} " +
+             "figures=${params.enable_figures} publication_figures=${params.enable_publication_figures}"
 
     // Make reference-panel divergence provenance-visible (its sha256 is recorded in run_manifest.json).
     def bundled_ref = "${projectDir}/assets/references/vertebrate_dna_ref_panel.fasta".toString()
@@ -251,6 +253,19 @@ workflow {
         if (params.enable_r_outputs) {
             PHYLOSEQ_FIGURES(BUILD_R_OUTPUTS.out.phyloseq, BUILD_R_OUTPUTS.out.decontam)
         }
+    }
+
+    // Streamlined, self-contained publication figure suite (5 main + supplementary, vector PDF/EPS,
+    // GADM bioclimatic-zone map) -> results/figures/. Needs the rambo host calls + ecological indices.
+    if (params.enable_publication_figures && params.enable_rambo_model) {
+        PUBLICATION_FIGURES(
+            AGGREGATE_RESULTS.out.host_assignments,
+            RAMBO_MIXED_MODEL.out.host_calls,
+            AGGREGATE_RESULTS.out.master_endpoint,
+            ECOLOGICAL_INDICES.out.indices,
+            file(params.input),
+            PREPROCESS_READS.out.read_decisions.collect()
+        )
     }
 
     BUILD_RUN_MANIFEST(

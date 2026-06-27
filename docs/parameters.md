@@ -76,6 +76,9 @@ speed; pass `--skip_taxonomy false` when you want the demo to exercise curated B
 |---|---|---|
 | `--enable_figures` | true | Render publication figures to `07_figures/` (needs `haema-figures`; off in `-profile test`). See [figures.md](figures.md). |
 | `--figure_formats` | `pdf,svg,png` | Comma-separated output formats (any subset of `pdf`, `svg`, `png`). |
+| `--enable_publication_figures` | true | Render the curated Objective 1 figure suite to `--publication_figures_dir` (off in `-profile test`). |
+| `--publication_figures_dir` | `results/figures` | Output directory for the curated suite (`main/`, `supplementary/`, `figure_data/`). |
+| `--figure_bioclim_column` | `bioclimatic_zone` | Metadata column used for bioclimatic-zone stratification in the curated suite. |
 
 ## Containers (pinned defaults; see docs/CONTAINER_STRATEGY.md)
 `--python_container`, `--blast_container`, `--r_container`, `--medaka_container`,

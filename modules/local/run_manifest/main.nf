@@ -21,14 +21,14 @@ process BUILD_RUN_MANIFEST {
         try {
             def f = new File(p?.toString() ?: '')
             (f.exists() && f.isFile()) ? java.security.MessageDigest.getInstance('SHA-256').digest(f.bytes).encodeHex().toString() : ''
-        } catch (Exception e) {
+        } catch (Exception _e) {
             ''
         }
     }
     def reference_checksums = [
-        reference_fasta: fileSha256(params.reference_fasta),
-        curated_reference_metadata: fileSha256(params.curated_reference_metadata),
-        reference_targets: fileSha256(params.reference_targets),
+        reference_fasta: fileSha256.call(params.reference_fasta),
+        curated_reference_metadata: fileSha256.call(params.curated_reference_metadata),
+        reference_targets: fileSha256.call(params.reference_targets),
     ]
     def parameters = [
         reference_checksums_sha256: reference_checksums,
@@ -70,6 +70,10 @@ process BUILD_RUN_MANIFEST {
         enable_decontam: params.enable_decontam,
         strict_bioconductor: params.strict_bioconductor,
         decontam_threshold: params.decontam_threshold,
+        enable_figures: params.enable_figures,
+        enable_publication_figures: params.enable_publication_figures,
+        publication_figures_dir: params.publication_figures_dir,
+        figure_bioclim_column: params.figure_bioclim_column,
         python_container: params.python_container,
         blast_container: params.blast_container,
         advanced_demux_container: params.advanced_demux_container,
@@ -93,7 +97,9 @@ process BUILD_RUN_MANIFEST {
         decontam_results: params.enable_r_outputs ? '06_reports/decontam_results.tsv' : '',
         production_preflight: 'pipeline_info/production_preflight/production_preflight_report.json',
         multiqc_report: params.enable_multiqc ? '06_reports/multiqc_report.html' : '',
-        custom_report: '06_reports/bloodmeal_pipeline_report.html'
+        custom_report: '06_reports/bloodmeal_pipeline_report.html',
+        automated_figures: params.enable_figures ? '07_figures/' : '',
+        publication_figures: params.enable_publication_figures ? params.publication_figures_dir : ''
     ]
     def parameters_b64 = groovy.json.JsonOutput.toJson(parameters).bytes.encodeBase64().toString()
     def outputs_b64 = groovy.json.JsonOutput.toJson(outputs).bytes.encodeBase64().toString()

@@ -6,7 +6,7 @@ PROFILE    ?= test,docker
 OUTDIR     ?= results/make_test
 PY_IMAGE   ?= haema-python:0.3.0
 R_IMAGE    ?= haema-r:0.3.0
-FIG_IMAGE  ?= haema-figures:0.3.0
+FIG_IMAGE  ?= haema-figures:0.4.0
 MEDAKA_IMG ?= haema-medaka:0.3.0
 # Set REGISTRY to your registry namespace to push, e.g. REGISTRY=ghcr.io/USER
 REGISTRY   ?=
@@ -27,7 +27,7 @@ pycompile:  ## Byte-compile all bin/*.py and tests/*.py
 unit:  ## Run python unit tests (validation, positive-control, LCA, taxid, ecological indices)
 	python3 tests/test_validation.py && python3 tests/test_positive_controls.py \
 	  && python3 tests/test_lca.py && python3 tests/test_taxid_assignment.py \
-	  && python3 tests/test_ecological_indices.py
+	  && python3 tests/test_ecological_indices.py && python3 tests/test_host_ecology_indices.py
 
 .PHONY: schema
 schema:  ## Validate nextflow_schema.json is valid JSON
@@ -52,7 +52,7 @@ stub:  ## Whole-DAG stub run (all optional features on)
 	$(NXF) run . -profile test,docker -stub-run \
 	  --skip_taxonomy false --enable_medaka true --medaka_container python:3.11 \
 	  --enable_r_outputs true --enable_multiqc true --multiqc_container python:3.11 \
-	  --enable_figures true --figures_container python:3.11 \
+	  --enable_figures true --enable_publication_figures true --figures_container python:3.11 \
 	  --blast_container python:3.11 --outdir results/make_stub --log_dir logs/make_stub
 
 .PHONY: prerelease

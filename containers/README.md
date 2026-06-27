@@ -9,12 +9,14 @@ images only where a public base cannot provide the scientific dependency stack:
 - `haema-python` — UMAP/HDBSCAN mixed-template denoising (`umap-learn`, `hdbscan`, `scikit-learn`,
   `numpy`, `scipy`, `pandas`, `biopython`).
 - `haema-r` — formal `phyloseq` + `decontam` (Bioconductor 3.20) ecology endpoints.
+- `haema-figures` — matplotlib/seaborn/geopandas publication figures, including the Ghana
+  bioclimatic-zone map.
 
 Medaka is **not** a custom image: the production profile pins the official upstream
 `ontresearch/medaka` image (immutable sha-tag) and verifies the required model at runtime via
 `MEDAKA_MODEL_PREFLIGHT`. See `../docs/CONTAINER_STRATEGY.md` for the full rationale.
 
-Both Dockerfiles pin their base by digest, pin every package version, install `procps` (Nextflow
+All custom Dockerfiles pin their base by digest, pin every package version, install `procps` (Nextflow
 needs `ps` for task metrics), and fail the build if the stack cannot be imported — so a successful
 build is reproducible.
 
@@ -23,6 +25,7 @@ build is reproducible.
 ```bash
 docker build -t haema-python:0.3.0 -f containers/haema-python/Dockerfile .
 docker build -t haema-r:0.3.0     -f containers/haema-r/Dockerfile .
+docker build -t haema-figures:0.4.0 -f containers/haema-figures/Dockerfile .
 ```
 
 ## Optional hardened Medaka image
@@ -51,7 +54,8 @@ docker run --rm haema-medaka:0.3.0 medaka tools list_models | grep -F r1041_e82_
 
 ## Registry / HPC
 
-For production/HPC release, push `haema-python:0.3.0` and `haema-r:0.3.0` to a registry and set
-`--python_container` / `--r_container` to the resulting immutable `@sha256:` digests. For
+For production/HPC release, push `haema-python:0.3.0`, `haema-r:0.3.0`, and
+`haema-figures:0.4.0` to a registry and set `--python_container` / `--r_container` /
+`--figures_container` to the resulting immutable `@sha256:` digests. For
 Apptainer/Singularity, set a shared `NXF_SINGULARITY_CACHEDIR` (the profiles read it) so the
 converted SIFs are built once and reused across nodes.

@@ -22,9 +22,11 @@ check python3 tests/test_validation.py
 check python3 tests/test_positive_controls.py
 check python3 tests/test_lca.py
 check python3 tests/test_taxid_assignment.py
+check python3 tests/test_ecological_indices.py
+check python3 tests/test_host_ecology_indices.py
 
 section "2. Schema is valid JSON and covers required inputs"
-check python3 -c "import json; d=json.load(open('nextflow_schema.json')); assert 'input' in d['required'] and 'raw_data_dir' in d['required']; print('  schema OK,',len(d['properties']),'params')"
+check python3 -c "import json; d=json.load(open('nextflow_schema.json')); io=next(x['\$ref'] for x in d['allOf'] if x['\$ref'].endswith('/input_output')); block=d['\$defs'][io.rsplit('/',1)[-1]]; assert {'input','raw_data_dir'} <= set(block['required']); print('  schema OK, input/output required fields:', ', '.join(block['required']))"
 
 section "3. nextflow.config parses for all profiles"
 for p in test local docker singularity apptainer slurm gpu production; do
@@ -37,8 +39,8 @@ check python3 bin/verify_reference_assets.py --assets-dir assets/references
 section "5. Fail-fast on missing required inputs"
 # Capture output first: Nextflow exits non-zero on the error, which would trip pipefail in a pipe.
 ff_out="$($NXF run . --outdir /tmp/haema_failfast 2>&1 || true)"
-if grep -q "Missing --input" <<<"$ff_out"; then
-  echo "  PASS (clear 'Missing --input' error)"
+if grep -Eq "Missing (--input|required parameter\\(s\\): input)" <<<"$ff_out"; then
+  echo "  PASS (clear missing-input error)"
 else
   echo "  FAIL (no clear missing-input error)"; fail=1
 fi

@@ -166,7 +166,7 @@ denoising, the third by the (default-on) figure step. Full rationale:
 # Build the custom images (from the repo root):
 docker build -t haema-python:0.3.0  -f containers/haema-python/Dockerfile .   # UMAP/HDBSCAN
 docker build -t haema-r:0.3.0       -f containers/haema-r/Dockerfile .        # phyloseq/decontam
-docker build -t haema-figures:0.3.0 -f containers/haema-figures/Dockerfile .  # matplotlib figures
+docker build -t haema-figures:0.4.0 -f containers/haema-figures/Dockerfile .  # matplotlib + geo figures
 ```
 
 For HPC/publication, push these to a registry and pass their immutable `@sha256:` digests via
@@ -184,7 +184,8 @@ results/
 ├── 04_taxonomy/          BLAST DB, raw BLAST hits, per-feature assignments
 ├── 05_endpoint_files/    ⭐ core downstream tables + phyloseq/decontam .rds + run_manifest.json
 ├── 06_reports/           HÆMA HTML report, MultiQC, decontam summaries
-└── 07_figures/           ⭐ publication figures (pdf/svg/png) + draft captions
+├── 07_figures/           ⭐ automated report/manuscript figures (pdf/svg/png) + draft captions
+└── figures/              ⭐ curated Objective 1 publication suite (PDF/EPS + plot-ready tables)
 pipeline_info/            Nextflow execution timeline, report, trace, DAG
 ```
 
@@ -195,6 +196,8 @@ whether each single-host positive control recovered its declared host. `07_figur
 ten publication-ready figures rendered from these tables (see [`docs/figures.md`](docs/figures.md)),
 and `05_endpoint_files/ecological_indices.tsv` reports the standard vector–host indices — Human Blood
 Index, zoophily, mixed-feeding rate, host diversity (see [`docs/ecological_indices.md`](docs/ecological_indices.md)).
+The optional curated Objective 1 suite writes five main figures, supplementary figures, and
+plot-ready tables to `results/figures/` when `--enable_publication_figures true`.
 See [`docs/output.md`](docs/output.md) for how to read each file.
 
 > **Scientific caution:** host fractions are abundance **evidence summaries, not validated

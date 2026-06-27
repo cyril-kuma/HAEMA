@@ -28,4 +28,7 @@ workflow PREPROCESS_READS {
     emit:
     marker_reads = ch_marker_reads
     qc_tables = ch_qc_tables
+    // Per-read decision tables for the read-length figure (Fig 2A). Safe to collect here: the
+    // figure step aggregates them into a streamed histogram, never a single in-memory dataframe.
+    read_decisions = TRIM_FILTER_SPLIT_MARKERS.out.decisions
 }

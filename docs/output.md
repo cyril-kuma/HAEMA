@@ -12,7 +12,8 @@ results/
 ├── 04_taxonomy/            blast_db/, curated_reference/, raw_blast/, assignments/, evidence/
 ├── 05_endpoint_files/      core downstream tables + .rds objects + run_manifest.json
 ├── 06_reports/             bloodmeal_pipeline_report.html, multiqc_report.html, decontam_*, qc_*
-└── 07_figures/             publication figures (pdf/svg/png) + figure_captions.md + figure_manifest.tsv
+├── 07_figures/             automated report/manuscript figures (pdf/svg/png) + manifests
+└── figures/                curated Objective 1 publication suite (default --publication_figures_dir)
 pipeline_info/              execution_timeline.html, execution_report.html, execution_trace.tsv, pipeline_dag.html
 ```
 
@@ -86,6 +87,10 @@ dpi PNG**, plus `figure_captions.md` (draft captions naming each figure's input 
 what each shows and how to regenerate them. The `PHYLOSEQ_FIGURES` step adds five **phyloseq-native**
 figures (11–15: composition, alpha/beta diversity, heatmap, decontam) rendered in R from
 `bloodmeal_phyloseq.rds` (PDF + PNG).
+
+The `PUBLICATION_FIGURES` step writes a separate curated Objective 1 suite to
+`--publication_figures_dir` (default `results/figures/`): five main figures, supplementary figures,
+and the plot-ready `figure_data/*.tsv` tables used to render them.
 
 The `ECOLOGICAL_INDICES` step writes `05_endpoint_files/ecological_indices.tsv` (Human Blood Index,
 zoophily, feeding-type partition, mixed-feeding rate, host-specific blood indices, and host diversity

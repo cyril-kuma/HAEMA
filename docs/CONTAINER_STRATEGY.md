@@ -7,7 +7,7 @@ The HÆMA pipeline uses a **hybrid, digest-pinned** container strategy.
   fallback-R steps. These run on a clean Docker machine with nothing to build.
 - **Custom project images** are used only where the public base image cannot satisfy a
   scientific dependency stack: UMAP/HDBSCAN denoising (Python), formal phyloseq/decontam
-  (R/Bioconductor), and matplotlib/seaborn publication figures. The first two are required by the
+  (R/Bioconductor), and matplotlib/seaborn/geopandas publication figures. The first two are required by the
   `production` profile / real denoising; the figures image is required by the default-on figure step.
 
 Every image is pinned to an immutable reference (an `@sha256:` digest, or for `ontresearch/medaka`
@@ -15,7 +15,7 @@ an immutable upstream `sha…` build tag) so that the same bytes are pulled on e
 every future date. `:latest` and floating minor tags are not used anywhere.
 
 > **On version numbers:** the custom images (`haema-python:0.3.0`, `haema-r:0.3.0`,
-> `haema-figures:0.3.0`) are versioned **independently** of the pipeline. The image tag tracks changes to that image's
+> `haema-figures:0.4.0`) are versioned **independently** of the pipeline. The image tag tracks changes to that image's
 > dependency stack (it was bumped 0.2.0→0.3.0 when the bases were digest-pinned and `procps`/repo
 > hardening were added), not the pipeline release. For publication, push the images to a registry
 > and pin them by `@sha256:` digest, after which the tag is only a human label.
@@ -32,7 +32,7 @@ every future date. `:latest` and floating minor tags are not used anywhere.
 | Production R outputs | `haema-r:0.3.0` | custom | Adds `phyloseq`, `decontam`, `ape` (Bioconductor 3.20, version-pinned) for formal ecological endpoints and decontamination. |
 | Medaka (default and production) | `ontresearch/medaka:shaf3943918…` | public, immutable sha-tag | Official ONT image pinned to an immutable build. The required SUP/R10 model is verified at runtime by `MEDAKA_MODEL_PREFLIGHT`. |
 | MultiQC | `multiqc/multiqc:v1.25@sha256:ad08efae…` | public, digest-pinned | Standard reporting image. |
-| Figures (default-on) | `haema-figures:0.3.0` | custom (slim + procps) | Adds pinned `matplotlib`, `seaborn`, `pandas`, `numpy` for the publication figure step. No public digest-pinned image bundles this stack; shares the `python:3.11-slim` base with `haema-python`. |
+| Figures (default-on) | `haema-figures:0.4.0` | custom (slim + procps) | Adds pinned `matplotlib`, `seaborn`, `pandas`, `numpy`, `geopandas`, `shapely`, `pyproj`, and `pyogrio` for the publication figure steps and Ghana map. No public digest-pinned image bundles this stack; shares the `python:3.11-slim` base with `haema-python`. |
 
 ## Why a hybrid strategy (and not all-public or all-custom)
 
@@ -57,7 +57,7 @@ From the `pipeline/` directory (or use the `Makefile` targets `make images` / `m
 ```bash
 docker build -t haema-python:0.3.0  -f containers/haema-python/Dockerfile .
 docker build -t haema-r:0.3.0       -f containers/haema-r/Dockerfile .
-docker build -t haema-figures:0.3.0 -f containers/haema-figures/Dockerfile .   # default-on figures
+docker build -t haema-figures:0.4.0 -f containers/haema-figures/Dockerfile .   # default-on figures
 
 # Push to your registry and get the digests to pin (replace REGISTRY with your namespace):
 make push REGISTRY=ghcr.io/USER        # then set --python_container / --r_container / --figures_container to @sha256:...
