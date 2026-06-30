@@ -1,10 +1,10 @@
-# HÆMA — ONT Blood-Meal Metabarcoding Pipeline
+# heamavec — ONT Blood-Meal Metabarcoding Pipeline
 
 [![Nextflow](https://img.shields.io/badge/nextflow-%E2%89%A524.10.0-23aa62)](https://www.nextflow.io/)
 [![run with docker](https://img.shields.io/badge/run%20with-docker-0db7ed)](https://www.docker.com/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue)](LICENSE)
 
-HÆMA is a reproducible, containerised **Nextflow (DSL2)** pipeline that identifies the
+heamvec is a reproducible, containerised **Nextflow (DSL2)** pipeline that identifies the
 **vertebrate host(s) of *Anopheles gambiae* s.l. blood meals** from Oxford Nanopore (R10.4.1)
 multi-marker amplicon data. It is built for **mixed blood meals** — where a mosquito has fed on
 more than one host — which traditional Sanger/ELISA methods cannot resolve.
