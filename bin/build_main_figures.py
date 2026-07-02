@@ -437,16 +437,31 @@ def main():
     only = {s.strip() for s in a.only.split(",") if s.strip()} or None
     want = lambda f: only is None or f in only
     print(f"main figures -> {a.outdir}")
-    if want("1"):
-        figure1(a.figure_data, a.geo_dir, a.outdir)
-    if want("2"):
-        figure2(a.figure_data, a.outdir)
-    if want("3"):
-        figure3(eco_o, eco_b, a.outdir)
-    if want("4"):
-        figure4(a.figure_data, eco_b, a.outdir)
-    if want("5"):
-        figure5(a.figure_data, a.outdir)
+    # Render each figure independently: a single figure that cannot be drawn on a
+    # small/degenerate stratum (e.g. NaN axis limits, empty legend) must not abort the
+    # whole publication-figures step. Failures are warned and skipped; a placeholder is
+    # written so the process still emits its declared `main/*` output.
+    import traceback
+    figs = [("1", lambda: figure1(a.figure_data, a.geo_dir, a.outdir)),
+            ("2", lambda: figure2(a.figure_data, a.outdir)),
+            ("3", lambda: figure3(eco_o, eco_b, a.outdir)),
+            ("4", lambda: figure4(a.figure_data, eco_b, a.outdir)),
+            ("5", lambda: figure5(a.figure_data, a.outdir))]
+    n_ok = 0
+    for name, fn in figs:
+        if not want(name):
+            continue
+        try:
+            fn()
+            n_ok += 1
+        except Exception as exc:  # noqa: BLE001 - resilience is intentional
+            print(f"  WARNING: figure {name} skipped ({type(exc).__name__}: {exc})")
+            traceback.print_exc()
+    if n_ok == 0:
+        os.makedirs(a.outdir, exist_ok=True)
+        with open(os.path.join(a.outdir, "figures_skipped.txt"), "w") as fh:
+            fh.write("No main figures could be rendered for this dataset "
+                     "(likely too few samples/strata). See run log for per-figure reasons.\n")
     print("done.")
 
 

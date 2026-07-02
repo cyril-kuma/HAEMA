@@ -205,13 +205,27 @@ def main():
     a = ap.parse_args()
     S.apply_house_style()
     print(f"supplementary figures -> {a.outdir}")
-    s1_rarefaction(a.figure_data, a.outdir)
-    s2_host_zone_matrix(pd.read_csv(a.eco_bioclim, sep="\t"), a.outdir)
-    figureB1_overlap_turnover(a.figure_data, a.outdir)
+    # Render each figure independently so one degenerate stratum cannot abort the step.
+    import traceback
+    jobs = [("S1", lambda: s1_rarefaction(a.figure_data, a.outdir)),
+            ("S2", lambda: s2_host_zone_matrix(pd.read_csv(a.eco_bioclim, sep="\t"), a.outdir)),
+            ("B1", lambda: figureB1_overlap_turnover(a.figure_data, a.outdir))]
     if a.concordance_table:
-        s3_concordance_heatmap(a.concordance_table, a.outdir)
+        jobs.append(("S3", lambda: s3_concordance_heatmap(a.concordance_table, a.outdir)))
     else:
         print("  Concordance heatmap skipped: --concordance-table not provided.")
+    n_ok = 0
+    for name, fn in jobs:
+        try:
+            fn()
+            n_ok += 1
+        except Exception as exc:  # noqa: BLE001 - resilience is intentional
+            print(f"  WARNING: figure {name} skipped ({type(exc).__name__}: {exc})")
+            traceback.print_exc()
+    if n_ok == 0:
+        os.makedirs(a.outdir, exist_ok=True)
+        with open(os.path.join(a.outdir, "figures_skipped.txt"), "w") as fh:
+            fh.write("No supplementary figures could be rendered for this dataset.\n")
     print("done.")
 
 
