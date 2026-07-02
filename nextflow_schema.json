@@ -279,7 +279,7 @@
         "taxonomy": {
             "title": "Taxonomic assignment",
             "type": "object",
-            "description": "Curated local-first BLAST + conservative LCA, optional nt fallback.",
+            "description": "Curated local-first BLAST + conservative LCA, optional nt/BOLD fallback.",
             "fa_icon": "fas fa-sitemap",
             "properties": {
                 "skip_taxonomy": {
@@ -296,6 +296,17 @@
                     ],
                     "default": "curated_then_fallback",
                     "description": "Taxonomy strategy. curated_then_fallback queries the curated reference first and uses an external database only for unresolved features."
+                },
+                "reference_mode": {
+                    "type": "string",
+                    "enum": [
+                        "curated_panel",
+                        "broad_blast",
+                        "remote_fallback",
+                        "bold_aware"
+                    ],
+                    "default": "curated_panel",
+                    "description": "Reference database mode. curated_panel = curated vertebrate panel only; broad_blast = user-supplied broad BLAST database; remote_fallback = curated panel with NCBI nt fallback; bold_aware = curated panel with BOLD-derived COI database for COI markers."
                 },
                 "blast_db": {
                     "type": "string",
@@ -381,6 +392,55 @@
                     "type": "boolean",
                     "default": false,
                     "description": "Fail LCA mode unless taxdump_dir contains NCBI taxonomy files."
+                },
+                "enable_curated_panel_check": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable curated panel as the first-line reference. When false, only broad_blast or remote fallback is used."
+                },
+                "enable_ncbi_remote_fallback": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Enable NCBI nt as a remote fallback when local assignment fails. Disabling improves reproducibility but reduces identification coverage."
+                },
+                "enable_bold_fallback": {
+                    "type": "boolean",
+                    "default": false,
+                    "description": "Enable BOLD-derived COI database as a tertiary fallback for co1_short and co1_long markers. Requires --bold_fasta to be set."
+                },
+                "bold_mode": {
+                    "type": "string",
+                    "enum": [
+                        "local_fasta",
+                        "api_query"
+                    ],
+                    "default": "local_fasta",
+                    "description": "BOLD integration mode. local_fasta = user-supplied BOLD-derived COI FASTA (reproducible); api_query = live BOLD API query (not reproducible by default)."
+                },
+                "bold_fasta": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Path to a BOLD-derived COI FASTA database for Mode D (BOLD-aware COI). Used when enable_bold_fallback is true and bold_mode is local_fasta."
+                },
+                "bold_taxonomy": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Optional TSV sidecar for BOLD-derived COI sequences with seqid, taxid, scientific_name, rank columns."
+                },
+                "coi_species_identity_threshold": {
+                    "type": "number",
+                    "default": 98.0,
+                    "description": "Minimum percent identity for COI species-level assignment (BOLD standard; Reeves et al. 2018, Santos et al. 2019). Applied post-hoc to the global min_blast_identity threshold."
+                },
+                "cytb_species_identity_threshold": {
+                    "type": "number",
+                    "default": 97.0,
+                    "description": "Minimum percent identity for CytB species-level assignment (Townzen et al. 2008; Hadj-Henni et al. 2015). Applied post-hoc to the global min_blast_identity threshold."
+                },
+                "marker_numt_risk": {
+                    "type": "string",
+                    "default": "",
+                    "description": "JSON string of per-marker NUMT risk levels, e.g. '{\"co1_short\": \"moderate\", \"co1_long\": \"low\", \"cyt_b\": \"low\"}'. If empty, defaults are used."
                 }
             }
         },

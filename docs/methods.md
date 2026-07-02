@@ -17,7 +17,11 @@ Per sample, FASTQ chunks were merged and reads were processed against the tri-ma
 (cytochrome *b*, short COI, long COI). Terminal primers were detected and trimmed allowing an
 error rate of `[primer_max_error_rate]` (IUPAC-aware), reads below mean Phred `[min_mean_q]` or
 `[min_read_length]` bp were discarded, and surviving reads were assigned to a marker by primer
-evidence and amplicon length window.
+evidence and amplicon length window. Reads assigned by length fallback (when primer evidence is
+absent) carry a higher marker misassignment risk; these are flagged with
+`assignment_method = "length_fallback"` in the master endpoint table for downstream filtering.
+
+### Mixed-template denoising
 
 To resolve mixed blood meals, marker reads were denoised before consensus generation: 5-mer
 spectra were embedded with UMAP (McInnes et al., 2018) and clustered with HDBSCAN
@@ -28,6 +32,17 @@ fallback. Per retained cluster, a consensus/representative sequence was generate
 (`[consensus_method]`; optional Medaka polishing, Oxford Nanopore Technologies, with model
 `[medaka_model]`).
 
+**Note on denoising layering:** UMAP+HDBSCAN denoising operates on *reads* (pre-BLAST) to partition
+mixed templates by sequence composition. The RAMBO evidence model (below) operates on *host-assigned
+reads* (post-BLAST) to accumulate evidence per host. These are complementary, not redundant,
+detection layers. The concept is supported by Channumsin et al. (2021), who confirmed multiple
+host templates co-occur in individual mosquito abdomens via TOPO-TA cloning, and by Kipp et al.
+(2023), who showed that sufficient read depth enables assembly of multiple distinct mitogenome
+sequences — the gold standard for mixed-template detection that UMAP+HDBSCAN approximates for
+lower-depth ONT data.
+
+### Taxonomic assignment
+
 Consensus sequences were assigned taxonomy by BLASTn (Camacho et al., 2009; v`[blast_version]`)
 against a curated Ghana/West-African vertebrate mitogenome panel, accepting hits with
 ≥`[min_blast_identity]`% identity and ≥`[min_blast_coverage]`% query coverage and resolving ties
@@ -35,12 +50,68 @@ with a conservative lowest-common-ancestor rule (`[taxonomy_assignment_method]`)
 from the curated taxonomy sidecar. Features unresolved by the curated panel were optionally queried
 against a local NCBI `nt` database.
 
-Laboratory background was assessed from extraction blanks and PCR negatives: features detected in
-negative controls were flagged, and (where R/Bioconductor was available) decontam
-(Davis et al., 2018) prevalence calls and negative-control background thresholds were computed.
-Controls were retained and flagged in all tables, never silently removed. Host assemblages per
-sample/marker were summarised with an abundance/evidence model that preserves multiple hosts above
-configurable read and fraction thresholds, classifying each as single- or mixed-host.
+**Per-marker identity threshold context:** The pipeline uses a global 97% minimum identity
+threshold for all markers. This is a conservative choice:
+
+| Marker | BOLD/standard species-level threshold | Pipeline global threshold | Assessment |
+|--------|--------------------------------------|--------------------------|------------|
+| COI (BOLD) | ≥98% (Reeves et al. 2018; Santos et al. 2019) | 97% | Conservative; high-confidence calls (pident ≥98%) can be filtered post-hoc |
+| CytB | ≥97–98% (Townzen et al. 2008; Hadj-Henni et al. 2015) | 97% | Appropriate |
+| 16S rRNA | ≥90% (Logue et al. 2016) | 97% | More conservative than standard |
+
+High-confidence assignments (pident ≥ 98%) can be filtered post-hoc using the `pident` field in
+`bloodmeal_master_endpoint.tsv`. The 97% floor protects against overcalling.
+
+**Lowest Common Ancestor (LCA) assignment:** Where top BLAST hits map to multiple species at equal
+or near-equal bitscore (within `top_bitscore_delta` = 2.0), the pipeline collapses the assignment
+to the Lowest Common Ancestor. When `--taxdump_dir` is supplied, taxid-based lineage escalation
+from NCBI taxonomy is used. Without `--taxdump_dir`, single-taxon hits receive their exact sidecar
+taxid, but ambiguous multi-taxon hits are collapsed by reference-defline genus string (less
+reliable for polyphyletic genus names). Production runs should supply `--taxdump_dir` for
+taxonomic rigour.
+
+**Reference database modes:** The pipeline supports multiple taxonomy modes:
+
+- **Mode A (curated panel):** Fast screening against the curated vertebrate panel. Limited by
+  panel completeness but appropriate for expected Ghanaian/peridomestic hosts.
+- **Mode B (broad BLAST):** User-supplied broader BLAST database (e.g., NCBI nt subset, custom
+  vertebrate mitochondrial database, combined curated + public reference).
+- **Mode C (remote fallback):** Optional fallback to NCBI `nt` when local assignment fails.
+- **Mode D (BOLD-aware COI):** For `co1_short` and `co1_long` markers, user-supplied BOLD-derived
+  COI FASTA database support is planned. Live BOLD API integration is lower priority due to
+  reproducibility concerns.
+
+**NUMT risk:** Nuclear mitochondrial pseudogenes (NUMTs) can be co-amplified alongside genuine
+mitochondrial DNA. Risk by marker:
+
+| Marker | Target size | NUMT risk | Rationale |
+|--------|-------------|-----------|-----------|
+| `co1_short` | 234 bp | **Moderate** | Borderline above the <200 bp risk threshold (Reeves et al. 2018) |
+| `co1_long` | 359 bp | **Low** | Longer amplicon reduces NUMT co-amplification probability |
+| `cyt_b` | 359 bp | **Low** | Mitochondrial multicopy advantage confirmed (Hadj-Henni et al. 2015) |
+
+NUMT risk is reported as a per-marker caution flag, not a hard filter. A NUMT risk flag does
+**not** prove NUMT contamination; it indicates theoretical possibility. Discordance between CytB
+and COI host calls for the same sample may warrant NUMT investigation.
+
+### Host evidence model (RAMBO)
+
+Host assemblages per sample/marker were summarised with an abundance/evidence model that preserves
+multiple hosts above configurable read and fraction thresholds, classifying each as single- or
+mixed-host. The RAMBO evidence model requires ≥3 supporting reads AND ≥1% of marker reads per host
+per sample.
+
+**Threshold comparison:** The 1% fraction threshold is more permissive than the >10% threshold
+used by Logue et al. (2016) for minor host detection. This increased sensitivity is appropriate
+for a discovery screen but means the pipeline may report mixed meals more frequently than gel-based
+or HRM methods. Stricter thresholds can be applied post-hoc by filtering the `host_fraction`
+column in `rambo_host_call_table.tsv`.
+
+**Important:** Host fractions are **supporting evidence only** and do **not** represent proportional
+ingested blood volumes (Logue et al. 2016). The run manifest records `host_fractions_benchmarked:
+false` to explicitly flag this limitation.
+
+### Ecological indices
 
 From the per-mosquito host calls (hosts unioned across markers, controls excluded), standard
 vector–host ecological indices were computed: the Human Blood Index (proportion of host-identified
@@ -53,13 +124,43 @@ opportunistic and each collection campaign coincided with a distinct site and se
 temporal/seasonal strata are reported descriptively and are confounded with location and batch; no
 temporal trend or seasonal-effect test was performed.
 
-Final outputs included a per-feature master table, host-call tables, an ASV count matrix, the
-ecological-indices table, phyloseq (McMurdie & Holmes, 2013) objects for downstream ecological
-analysis, a MultiQC report (Ewels et al., 2016), a curated Objective 1 publication-figure suite
-(including a Ghana bioclimatic-zone map and vector-host incidence/network tables), and a
-machine-readable run manifest of parameters and container digests. The phyloseq object was
-visualised directly (composition, alpha- and beta-diversity ordination, host × sample heatmap, and a
-decontam prevalence diagnostic), giving table-derived, map-based, and phyloseq-native figures.
+**Scientific framing:** Blood-meal host identifications describe **realised vertebrate blood-meal
+host use** among blood-fed mosquitoes. In the absence of host availability (abundance) data, **no
+inference about host preference, host selection, or diversion from host availability is warranted**
+(Gueye et al. 2023; Altahir et al. 2022). All figures, tables, and reports must use "host use" or
+"blood-meal composition" language. Labels such as "host preference profile" are prohibited without
+host-availability data.
+
+**Detection window:** Following Kent & Norris (2005), host DNA is reliably detectable within
+24–30 hours post-feeding. Heavily digested blood meals (Sella scale 5–6; Santos et al. 2019) may
+produce false-negative identifications even when the host is present in the curated panel.
+
+**Reference-dependent sensitivity:** Following Channumsin (2021) and Kipp (2023), identifications
+are limited by curated panel and NCBI `nt` coverage. Taxa absent from both databases will return
+`no_confident_blast_hit`.
+
+### Multi-marker concordance
+
+For samples with host calls from two or more markers, concordance analysis assesses whether host
+assignments agree at species or genus level. Discordant calls between CytB and COI for the same
+sample may indicate NUMT co-amplification, reference database gaps, or genuine within-sample
+complexity. Concordance status values include: `full_species_agreement`, `genus_agreement`,
+`discordant`, `single_marker_only`, `no_marker_signal`, `ambiguous_lca_only`.
+
+**Status:** Planned (Recommendation 10). Not yet implemented.
+
+### Host ecology statistical comparisons
+
+Formal statistical comparisons between HBI strata (Fisher's exact test with Holm-Bonferroni
+correction) are planned for:
+
+- Pairwise HBI comparisons between ecological zones
+- Pairwise HBI comparisons between sibling species (if sample sizes permit)
+- Mixed-feeding rate comparisons between zones
+- Host richness comparisons between zones (Kruskal-Wallis, if meaningful)
+
+**Status:** Planned (Recommendation 9). All tests should be framed as exploratory unless
+pre-specified as primary. Small-n warnings are applied when any stratum has n < 5.
 
 ## Reproducibility
 

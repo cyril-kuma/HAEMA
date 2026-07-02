@@ -112,17 +112,106 @@ def figureB1_overlap_turnover(fd, outdir):
     S.save(fig, outdir, "figure_B1_niche_overlap_turnover")
 
 
+def s3_concordance_heatmap(concordance_tsv, outdir):
+    """Multi-marker concordance heatmap (sample x marker grid).
+    
+    Colour = host taxon; grey = no call; white = marker not attempted.
+    Directly motivated by Ogola 2017 (3-marker comparison) and Channumsin 2021.
+    """
+    import json as _json
+    
+    df = pd.read_csv(concordance_tsv, sep="\t")
+    if df.empty or 'host_calls_by_marker' not in df.columns:
+        print("  Concordance heatmap skipped: no concordance data available.")
+        return
+    
+    # Parse host_calls_by_marker JSON
+    records = []
+    for _, row in df.iterrows():
+        specimen = row.get('specimen_id', '')
+        status = row.get('concordance_status', 'unknown')
+        try:
+            calls = _json.loads(row.get('host_calls_by_marker', '{}'))
+        except (TypeError, _json.JSONDecodeError):
+            calls = {}
+        records.append({'specimen_id': specimen, 'concordance_status': status, 'calls': calls})
+    
+    if not records:
+        print("  Concordance heatmap skipped: no parsed records.")
+        return
+    
+    # Build specimen x marker matrix
+    all_markers = sorted(set(m for r in records for m in r['calls'].keys()))
+    if not all_markers:
+        print("  Concordance heatmap skipped: no markers found.")
+        return
+    
+    specimens = [r['specimen_id'] for r in records]
+    matrix = []
+    statuses = []
+    for r in records:
+        row = []
+        for m in all_markers:
+            host = r['calls'].get(m, '')
+            row.append(host if host else '')
+        matrix.append(row)
+        statuses.append(r['concordance_status'])
+    
+    matrix = np.array(matrix)
+    
+    # Build colour map for hosts
+    all_hosts = sorted(set(h for row in matrix for h in row if h))
+    host_colors = {h: S.SEQ_HEX[i % len(S.SEQ_HEX)] for i, h in enumerate(all_hosts)}
+    host_colors[''] = '#CCCCCC'  # grey for no call
+    
+    fig, ax = plt.subplots(figsize=(max(4.0, len(all_markers) * 0.8), max(3.0, len(specimens) * 0.15)))
+    
+    # Heatmap: colour = host taxon
+    im = ax.imshow([[host_colors.get(matrix[r, c], '#DDDDDD') for c in range(len(all_markers))]
+                     for r in range(len(specimens))],
+                    aspect='auto')
+    
+    ax.set_xticks(range(len(all_markers)))
+    ax.set_xticklabels(all_markers, fontsize=7, rotation=45, ha='right')
+    ax.set_yticks(range(len(specimens)))
+    ax.set_yticklabels(specimens, fontsize=5)
+    ax.set_xlabel('Marker', fontsize=7)
+    ax.set_title('Multi-Marker Concordance', fontsize=8, fontweight='bold')
+    
+    # Add concordance status as a colour bar on the side
+    status_colors = {
+        'full_species_agreement': '#2ca02c',
+        'genus_agreement': '#ff7f0e',
+        'discordant': '#d62728',
+        'single_marker_only': '#9467bd',
+        'no_marker_signal': '#888888',
+        'ambiguous_lca_only': '#1f77b4',
+    }
+    status_legend = [Patch(facecolor=status_colors.get(s, '#cccccc'), label=s) 
+                     for s in sorted(set(statuses))]
+    ax.legend(handles=status_legend, loc='center left', bbox_to_anchor=(1.02, 0.5),
+              fontsize=4.5, title='Concordance Status', title_fontsize=5.5)
+    
+    fig.tight_layout()
+    S.save(fig, outdir, 'figure_S3_concordance_heatmap')
+    print(f"  Concordance heatmap saved: {os.path.join(outdir, 'figure_S3_concordance_heatmap.pdf')}")
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--figure-data", required=True)
     ap.add_argument("--eco-bioclim", required=True)
     ap.add_argument("--outdir", required=True)
+    ap.add_argument("--concordance-table", default="", help="Path to multi-marker concordance TSV")
     a = ap.parse_args()
     S.apply_house_style()
     print(f"supplementary figures -> {a.outdir}")
     s1_rarefaction(a.figure_data, a.outdir)
     s2_host_zone_matrix(pd.read_csv(a.eco_bioclim, sep="\t"), a.outdir)
     figureB1_overlap_turnover(a.figure_data, a.outdir)
+    if a.concordance_table:
+        s3_concordance_heatmap(a.concordance_table, a.outdir)
+    else:
+        print("  Concordance heatmap skipped: --concordance-table not provided.")
     print("done.")
 
 
