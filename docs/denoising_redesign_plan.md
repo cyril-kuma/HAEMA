@@ -144,6 +144,14 @@ computationally pooling reads** from single-host control barcodes:
    false-positive rate, and observed-vs-input minor fraction. Pick thresholds
    (`min_host_fraction`, `min_reads_per_host`, cluster knobs) from the ROC/recovery curves.
 
+**Result (implemented — see [`denoising_calibration/README.md`](denoising_calibration/README.md)):**
+The harness (`bin/make_insilico_mixtures.py`, `bin/classify_reads.py`,
+`bin/benchmark_mixed_detection.py`) was run on 180 synthetic mixtures (Human/Cattle/Goat/Chicken,
+99:1→50:50, ×3). Outcome: **LOD ≈ 5 % minor host**, and **`min_host_fraction = 0.02` is the operating
+point (0 % false positives, 100 % detection ≥5 %)** — the current RAMBO 1 % default sits in the noise
+floor (11–17 % false positives), and Logue's 10 % is over-conservative. Observed fractions track true
+ratios monotonically (mild under-estimate) → qualitative only.
+
 **What this validates and what it does not (critical-thinking honesty):**
 - ✅ Calibrates the **bioinformatic** behaviour: detection floor, threshold values, and whether
   read_classification beats cluster_consensus for minor-host recovery — *exactly the denoising gap.*
