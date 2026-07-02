@@ -42,6 +42,20 @@ def norm_taxon(name):
 
 
 UNRESOLVED_HOSTS = {'', 'unassigned', 'ambiguous', 'no_host_signal', 'unresolved'}
+# Vector / non-host genera (mosquito self-hits etc.) excluded from host concordance.
+NON_HOST_GENERA = {
+    'Anopheles', 'Culex', 'Aedes', 'Ochlerotatus', 'Culiseta', 'Mansonia',
+    'Culicidae', 'Culicinae', 'Anophelinae', 'Culicoides', 'Phlebotomus',
+    'Lutzomyia', 'Simulium', 'Glossina', 'Ixodes', 'Rhipicephalus', 'Amblyomma',
+}
+
+
+def is_host_call(name):
+    """True if a host_assignment is a real (vertebrate) host, not unresolved or a vector."""
+    if norm_taxon(name) in UNRESOLVED_HOSTS:
+        return False
+    genus = (name or '').replace('_', ' ').split()[0] if (name or '').strip() else ''
+    return genus not in NON_HOST_GENERA
 
 
 def compute_concordance(host_call_rows):
@@ -73,7 +87,7 @@ def compute_concordance(host_call_rows):
         sample_id_of.setdefault(specimen_id, row.get('sample_id', ''))
         marker = (row.get('marker') or '').strip()
         host_call = (row.get('host_assignment') or '').strip()
-        if not marker or norm_taxon(host_call) in UNRESOLVED_HOSTS:
+        if not marker or not is_host_call(host_call):
             continue
         try:
             rank = int(row.get('host_rank') or 0)

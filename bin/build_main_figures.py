@@ -106,9 +106,10 @@ def figure1(fd, geo_dir, outdir):
     axB.set_xlabel("Relative abundance")
     axB.set_title("Sibling-species composition", fontsize=7)
     axB.invert_yaxis()
-    axB.legend(handles=[Patch(facecolor=S.SPECIES_HEX[s], label=S.italic(S.SPECIES_LABEL[s]))
-               for s in species], loc="upper center", bbox_to_anchor=(0.5, -0.12),
-               ncol=len(species), fontsize=5, columnspacing=1.0, handletextpad=0.4)
+    if species:
+        axB.legend(handles=[Patch(facecolor=S.SPECIES_HEX[s], label=S.italic(S.SPECIES_LABEL[s]))
+                   for s in species], loc="upper center", bbox_to_anchor=(0.5, -0.12),
+                   ncol=max(1, len(species)), fontsize=5, columnspacing=1.0, handletextpad=0.4)
     S.panel_label(axB, "B", dx=-0.18, dy=1.02)
     fig.suptitle("Study system: Ghanaian bioclimatic zones, sampling sites and vector composition",
                  fontweight="bold", fontsize=8, y=1.02)

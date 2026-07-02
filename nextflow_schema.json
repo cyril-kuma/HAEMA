@@ -456,6 +456,11 @@
                     "type": "boolean",
                     "default": true,
                     "description": "Compute exploratory host-use statistical comparisons (Fisher's exact + Holm) between strata. Augments, does not replace, the descriptive ecological indices."
+                },
+                "non_host_genera": {
+                    "type": "string",
+                    "default": "",
+                    "description": "Comma-separated genera to exclude as non-host (vector self-hits etc.) from host-use indices when a broad reference database can match the vector. Empty uses the built-in vector default (Anopheles, Culex, Aedes, ...)."
                 }
             }
         },

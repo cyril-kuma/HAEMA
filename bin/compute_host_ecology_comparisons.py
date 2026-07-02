@@ -36,6 +36,21 @@ def read_tsv(path):
 
 HUMAN = 'Homo sapiens'
 UNRESOLVED_HOSTS = {'', 'unassigned', 'ambiguous', 'no_host_signal', 'unresolved'}
+# Vector / non-host genera whose mtDNA can co-amplify against a broad reference database
+# and must not be counted as blood-meal hosts (matched by genus / first token).
+DEFAULT_NON_HOST_GENERA = {
+    'Anopheles', 'Culex', 'Aedes', 'Ochlerotatus', 'Culiseta', 'Mansonia',
+    'Culicidae', 'Culicinae', 'Anophelinae', 'Culicoides', 'Phlebotomus',
+    'Lutzomyia', 'Simulium', 'Glossina', 'Ixodes', 'Rhipicephalus', 'Amblyomma',
+}
+
+
+def is_host(name, non_host_genera=DEFAULT_NON_HOST_GENERA):
+    """True if a host_assignment names a real (vertebrate) host, not a vector/non-host."""
+    if norm_taxon(name) in UNRESOLVED_HOSTS:
+        return False
+    genus = (name or '').replace('_', ' ').split()[0] if (name or '').strip() else ''
+    return genus not in non_host_genera
 
 
 def norm_taxon(name):
@@ -77,7 +92,7 @@ def build_host_sets(host_call_rows):
             continue
         all_uids.add(uid)
         host = (r.get('host_assignment') or '').strip()
-        if norm_taxon(host) not in UNRESOLVED_HOSTS:
+        if is_host(host):
             host_sets[uid].add(host)
     return host_sets, all_uids
 
@@ -281,6 +296,47 @@ def pairwise_comparisons(stratum_data, value_key, label):
     return comparisons
 
 
+def kruskal_richness(host_sets, all_uids, uid_to_level):
+    """Kruskal-Wallis test of per-specimen host richness across strata levels (C3).
+
+    Per-specimen richness = number of distinct host taxa in that specimen's host set.
+    Tests whether the distribution of per-specimen host richness differs across ecological
+    zones. Host-unidentified specimens are excluded (consistent with the other indices).
+    Exploratory; requires scipy (returns a null result with a note otherwise).
+    """
+    groups = defaultdict(list)
+    for uid in all_uids:
+        level = uid_to_level.get(uid, '')
+        if not level:
+            continue
+        hs = host_sets.get(uid)
+        if not hs:
+            continue
+        groups[level].append(len(hs))
+    result = {
+        'test': 'kruskal_wallis_host_richness',
+        'n_groups': len(groups),
+        'group_sizes': {k: len(v) for k, v in sorted(groups.items())},
+        'statistic': None,
+        'p_value': None,
+        'small_n_warning': any(len(v) < 5 for v in groups.values()),
+        'note': 'exploratory; per-specimen host richness across ecological zones',
+    }
+    if len(groups) < 2:
+        result['note'] = 'need >=2 zones with host-identified specimens'
+        return result
+    try:
+        from scipy.stats import kruskal
+        stat, p = kruskal(*groups.values())
+        result['statistic'] = round(float(stat), 4)
+        result['p_value'] = round(float(p), 6)
+    except ImportError:
+        result['note'] = 'scipy not available; Kruskal-Wallis not computed'
+    except ValueError as exc:
+        result['note'] = f'Kruskal-Wallis not computed: {exc}'
+    return result
+
+
 def apply_holm(comparisons):
     """Fill corrected_p_value / significance flags in place via Holm-Bonferroni."""
     holm = holm_correction([(i, c['raw_p_value']) for i, c in enumerate(comparisons)
@@ -375,6 +431,9 @@ def main():
                 'small_n_warning': data['small_n_warning'],
             })
 
+    # === Kruskal-Wallis: per-specimen host richness across zones (C3, exploratory) ===
+    kruskal_zone = kruskal_richness(host_sets, all_uids, strata['ecological_zone'])
+
     # === Write summary ===
     n_field = sum(1 for r in host_call_rows if (r.get('control_status') or '').strip() == 'sample')
     summary = {
@@ -388,6 +447,7 @@ def main():
         'strata_zone': sorted(zone_stats.keys()),
         'strata_species': sorted(species_stats.keys()),
         'strata_season': sorted(season_stats.keys()),
+        'kruskal_host_richness_zone': kruskal_zone,
         'exploratory_note': args.exploratory_note,
         'notes': [
             "All tests are Fisher's exact (two-tailed) on host-identified field specimens.",

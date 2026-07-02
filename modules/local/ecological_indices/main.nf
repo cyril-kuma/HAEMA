@@ -23,6 +23,7 @@ process ECOLOGICAL_INDICES {
         --species-column '${params.eco_index_species_column}' \\
         --date-column '${params.eco_index_date_column}' \\
         --wet-months '${params.eco_index_wet_months}' \\
+        --non-host-genera '${params.non_host_genera}' \\
         --output-tsv ecological_indices.tsv \\
         --output-json ecological_indices_summary.json
 

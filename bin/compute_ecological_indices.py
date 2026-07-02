@@ -32,7 +32,25 @@ from collections import defaultdict
 from pathlib import Path
 
 HUMAN = "Homo sapiens"
-NON_HOST = {"", "unassigned"}
+NON_HOST = {"", "unassigned", "ambiguous", "unresolved"}
+# Blood-meal hosts are vertebrates; the vector's own mtDNA (and other haematophagous
+# arthropods) can co-amplify and match a broad reference database. Such calls are NOT
+# hosts and must be excluded from host-use indices. Matched by GENUS (first token).
+# Configurable via --non-host-genera; default covers common vectors.
+DEFAULT_NON_HOST_GENERA = {
+    "Anopheles", "Culex", "Aedes", "Ochlerotatus", "Culiseta", "Mansonia",
+    "Culicidae", "Culicinae", "Anophelinae", "Culicoides", "Phlebotomus",
+    "Lutzomyia", "Simulium", "Glossina", "Ixodes", "Rhipicephalus", "Amblyomma",
+}
+
+
+def is_host(name, non_host_genera=DEFAULT_NON_HOST_GENERA):
+    """True if a host_assignment names a real (vertebrate) host, not a vector/non-host."""
+    n = (name or "").strip()
+    if n in NON_HOST:
+        return False
+    genus = n.replace("_", " ").split()[0] if n else ""
+    return genus not in non_host_genera
 Z = 1.959963984540054  # 95% normal quantile
 
 
@@ -86,11 +104,12 @@ def diversity(counts):
     return {"host_richness": s, "shannon_h": h, "gini_simpson": simpson, "pielou_evenness": pielou}
 
 
-def per_mosquito_hosts(host_rows):
+def per_mosquito_hosts(host_rows, non_host_genera=DEFAULT_NON_HOST_GENERA):
     """Collapse host_call_table (sample x marker x host) to one host *set* per field mosquito.
 
     Returns {sample_uid: set(host_taxa)} over control_status == 'sample' only; a sample present
-    with no real host call maps to an empty set (tested-but-unidentified)."""
+    with no real host call maps to an empty set (tested-but-unidentified). Vector/non-host
+    taxa (e.g. the mosquito's own mtDNA co-amplified against a broad database) are excluded."""
     hosts = defaultdict(set)
     for r in host_rows:
         if r.get("control_status") != "sample":
@@ -98,7 +117,7 @@ def per_mosquito_hosts(host_rows):
         uid = r.get("sample_uid", "")
         hosts.setdefault(uid, set())
         h = (r.get("host_assignment") or "").strip()
-        if h not in NON_HOST:
+        if is_host(h, non_host_genera):
             hosts[uid].add(h)
     return hosts
 
@@ -169,12 +188,17 @@ def main():
     ap.add_argument("--date-column", default="collection_date", help="collection-date column (temporal strata)")
     ap.add_argument("--wet-months", default="4,5,6,7,8,9,10",
                     help="comma-separated month numbers treated as the wet season (default Apr-Oct)")
+    ap.add_argument("--non-host-genera", default="",
+                    help="Comma-separated genera to exclude as non-host (vector self-hits etc.); "
+                         "overrides the built-in default vector list when set.")
     ap.add_argument("--output-tsv", required=True)
     ap.add_argument("--output-json", default="")
     args = ap.parse_args()
 
     host_rows = read_tsv(args.host_calls)
-    host_sets = per_mosquito_hosts(host_rows)
+    non_host_genera = ({g.strip() for g in args.non_host_genera.split(",") if g.strip()}
+                       if args.non_host_genera else DEFAULT_NON_HOST_GENERA)
+    host_sets = per_mosquito_hosts(host_rows, non_host_genera)
     all_uids = list(host_sets.keys())
 
     # map sample_uid -> strata metadata from the master endpoint (one value per uid). Temporal
