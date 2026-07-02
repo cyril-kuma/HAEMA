@@ -138,6 +138,28 @@ Ghanaian/peridomestic hosts. The NCBI `nt` fallback extends coverage but is not 
 **Recommendation:** Expand and version the curated panel with checksums, accessions, and retrieval
 dates. Consider adding marker-specific extracted references (e.g., COI-only, CytB-only subsets).
 
+## Vector self-amplification with a broad database (added 2026-07-02)
+
+Real-data validation with the broad RefSeq-mitochondrion database (`broad_blast` mode) confirmed a
+consequence of moving away from a vertebrate-only curated panel: the **vector's own mitochondrial
+DNA co-amplifies** with the vertebrate COI/CytB primers and matches the broad database, so
+*Anopheles* is returned as a top hit for a fraction of features. In one validation subset, 24
+features resolved to *Anopheles gambiae* via the broad fallback. **This is not a host.** Blood-meal
+hosts are vertebrates.
+
+**Handling:** host-use indices, multi-marker concordance, and the statistical comparisons exclude a
+configurable set of non-host (vector) genera by genus name (`--non_host_genera`; default
+*Anopheles, Culex, Aedes, ...*, plus common ticks/sandflies/tsetse). Vector calls are therefore
+dropped from HBI/ABI/richness/mixed-feeding and from concordance, but remain visible in the raw
+`bloodmeal_master_endpoint.tsv` / `host_call_table.tsv` for transparency and QC.
+
+**Caveats:** (i) exclusion is by genus string, so a broad database with unusual deflines may need
+`--non_host_genera` extended; (ii) other non-vertebrate matches (e.g. *Plasmodium*, environmental
+taxa) are not enumerated and would appear as improbable "hosts" — inspect low-frequency calls;
+(iii) a cleaner long-term option is to build the broad database restricted to Chordata/vertebrates,
+which removes vector and microbial references entirely at the cost of not flagging vector/parasite
+co-amplification as a QC signal.
+
 ## Per-marker identity threshold context (added 2026-06-30)
 
 The pipeline uses a **global** 97% minimum identity threshold for all markers. This is a
