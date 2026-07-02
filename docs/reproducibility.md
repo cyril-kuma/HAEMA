@@ -15,7 +15,13 @@ produce identical results on any machine with Nextflow and a container engine.
   version, and self-test their imports at build time. For publication, push them to a registry and
   set `--python_container` / `--r_container` to the resulting digests.
 - **Reference data** — the curated panel, taxonomy sidecar, and target manifest are vendored under
-  `assets/references/` and versioned with the repo.
+  `assets/references/` and versioned with the repo. The broad BLAST database used by `broad_blast`
+  mode is built reproducibly from a **fixed public release** (e.g. NCBI RefSeq mitochondrion
+  release 235) with `bin/build_reference_db.py`, which records source, release, build date and a
+  SHA-256 in a provenance JSON; that database and its checksum are echoed into `run_manifest.json`.
+  Pin the release number to reproduce the database. A live remote API is **not** used by default —
+  `remote_fallback` (NCBI `-remote`) is opt-in and explicitly flagged non-reproducible because the
+  remote database changes over time; prefer a versioned local database.
 - **Parameters & provenance** — every run writes `05_endpoint_files/run_manifest.json` recording
   parameters, container images, profile, command line, and session ID. Nextflow also emits an
   execution trace, timeline, report, and DAG under `pipeline_info/`.

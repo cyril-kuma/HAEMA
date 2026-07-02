@@ -98,6 +98,18 @@ its default, so existing configurations keep working. Each mode uses at most one
   api_query`) is intentionally **not** implemented — a network-dependent lookup would make routine
   runs non-reproducible; supply a downloaded BOLD FASTA instead.
 
+**Recommended real-run configuration.** Because reference completeness is the primary limiting
+factor and the curated panel cannot represent unexpected vertebrate hosts, real runs use
+**Mode B (`broad_blast`) with the curated panel as pre-check**: the curated panel resolves the
+expected peridomestic Ghanaian hosts (fast, taxid-aware), and a broad, versioned, offline
+mitochondrial database resolves everything the panel misses. This repository builds that broad
+database from **NCBI RefSeq mitochondrion** (a fixed release, e.g. release 235 ≈ 18,000 mitogenomes
+covering both COI and CytB across vertebrates and beyond) with `bin/build_reference_db.py`, which
+normalises deflines to `Genus_species|accession` and emits a provenance JSON (source, release,
+build date, SHA-256, sequence/taxon counts). The curated panel is thereby **repositioned as a
+rapid/validation layer, not the scientific bottleneck**. A live remote API is not used for default
+runs (see reproducibility below).
+
 The reference database actually used, its SHA-256 checksum, the fallback chain, and the per-marker
 identity thresholds and NUMT risk are all recorded in `run_manifest.json` under `reference_database`.
 
