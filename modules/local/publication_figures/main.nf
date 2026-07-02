@@ -12,6 +12,7 @@ process PUBLICATION_FIGURES {
     path eco_indices            // ecological_indices.tsv (overall stratum)
     path samplesheet            // sample list + metadata (vector composition over ALL mosquitoes)
     path read_decisions         // collected *.read_decisions.tsv (Fig 2A read lengths)
+    path concordance            // marker_concordance.tsv, or NO_FILE (figure S3 concordance heatmap)
 
     output:
     path 'main/*',          emit: main
@@ -58,10 +59,15 @@ process PUBLICATION_FIGURES {
         --geo-dir '${projectDir}/assets/geo' \\
         --outdir main
 
-    # supplementary figures
+    # supplementary figures (incl. figure S3 multi-marker concordance heatmap when available)
+    CONCORDANCE_ARG=""
+    if [[ '${concordance.name}' != 'NO_FILE' && -s '${concordance}' ]]; then
+        CONCORDANCE_ARG="--concordance-table ${concordance}"
+    fi
     PYTHONPATH='${projectDir}/bin' python3 '${projectDir}/bin/build_supplementary_figures.py' \\
         --figure-data figure_data \\
         --eco-bioclim figure_data/ecological_indices_bioclim.tsv \\
+        \${CONCORDANCE_ARG} \\
         --outdir supplementary
 
     cat > versions.yml <<-END_VERSIONS

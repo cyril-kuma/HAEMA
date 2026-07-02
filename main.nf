@@ -19,6 +19,8 @@ include { BUILD_R_OUTPUTS } from './modules/local/r_outputs/main.nf'
 include { MULTIQC_REPORT } from './modules/local/multiqc/main.nf'
 include { RAMBO_MIXED_MODEL } from './modules/local/rambo_model/main.nf'
 include { ECOLOGICAL_INDICES } from './modules/local/ecological_indices/main.nf'
+include { MARKER_CONCORDANCE } from './modules/local/marker_concordance/main.nf'
+include { HOST_ECOLOGY_COMPARISONS } from './modules/local/host_ecology_comparisons/main.nf'
 include { BUILD_FIGURES } from './modules/local/figures/main.nf'
 include { PUBLICATION_FIGURES } from './modules/local/publication_figures/main.nf'
 include { PHYLOSEQ_FIGURES } from './modules/local/phyloseq_figures/main.nf'
@@ -197,6 +199,12 @@ workflow {
     // (needs the RAMBO host-call layer) — see docs/ecological_indices.md.
     if (params.enable_rambo_model) {
         ECOLOGICAL_INDICES(RAMBO_MIXED_MODEL.out.host_calls, AGGREGATE_RESULTS.out.master_endpoint)
+
+        // Multi-marker concordance (species/genus agreement + NUMT/mixed-meal caution flags)
+        // and exploratory host-use statistical comparisons (Fisher's exact + Holm). Both are
+        // additive reporting layers over the RAMBO host calls; each is independently gated.
+        MARKER_CONCORDANCE(RAMBO_MIXED_MODEL.out.host_calls, AGGREGATE_RESULTS.out.master_endpoint)
+        HOST_ECOLOGY_COMPARISONS(RAMBO_MIXED_MODEL.out.host_calls, AGGREGATE_RESULTS.out.master_endpoint)
     }
 
     BUILD_REPORT(
@@ -258,13 +266,18 @@ workflow {
     // Streamlined, self-contained publication figure suite (5 main + supplementary, vector PDF/EPS,
     // GADM bioclimatic-zone map) -> results/figures/. Needs the rambo host calls + ecological indices.
     if (params.enable_publication_figures && params.enable_rambo_model) {
+        // Optional multi-marker concordance heatmap input (figure S3); NO_FILE when disabled.
+        ch_concordance_fig = params.enable_marker_concordance
+            ? MARKER_CONCORDANCE.out.concordance
+            : channel.fromPath("${projectDir}/assets/NO_FILE")
         PUBLICATION_FIGURES(
             AGGREGATE_RESULTS.out.host_assignments,
             RAMBO_MIXED_MODEL.out.host_calls,
             AGGREGATE_RESULTS.out.master_endpoint,
             ECOLOGICAL_INDICES.out.indices,
             file(params.input),
-            PREPROCESS_READS.out.read_decisions.collect()
+            PREPROCESS_READS.out.read_decisions.collect(),
+            ch_concordance_fig
         )
     }
 

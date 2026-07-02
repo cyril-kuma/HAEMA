@@ -446,6 +446,16 @@
                     "type": "string",
                     "default": "",
                     "description": "JSON string of per-marker NUMT risk levels, e.g. '{\"co1_short\": \"moderate\", \"co1_long\": \"low\", \"cyt_b\": \"low\"}'. If empty, defaults are used."
+                },
+                "enable_marker_concordance": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Compute multi-marker concordance (species/genus agreement, NUMT and mixed-meal caution flags) per specimen from the RAMBO host calls."
+                },
+                "enable_host_ecology_comparisons": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Compute exploratory host-use statistical comparisons (Fisher's exact + Holm) between strata. Augments, does not replace, the descriptive ecological indices."
                 }
             }
         },
