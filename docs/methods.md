@@ -59,8 +59,13 @@ threshold for all markers. This is a conservative choice:
 | CytB | ≥97–98% (Townzen et al. 2008; Hadj-Henni et al. 2015) | 97% | Appropriate |
 | 16S rRNA | ≥90% (Logue et al. 2016) | 97% | More conservative than standard |
 
-High-confidence assignments (pident ≥ 98%) can be filtered post-hoc using the `pident` field in
-`bloodmeal_master_endpoint.tsv`. The 97% floor protects against overcalling.
+These per-marker thresholds are now enforced automatically as a conservative confidence guard:
+a species-level assignment that would otherwise be labelled `high` is downgraded to `medium` when
+its top identity falls below the marker's species threshold (`--coi_species_identity_threshold`,
+`--cytb_species_identity_threshold`). This never loosens the global pass filter
+(`--min_blast_identity`, default 97%); it only prevents species-level overcalling. High-confidence
+assignments can additionally be filtered post-hoc using the `pident` field in
+`bloodmeal_master_endpoint.tsv`.
 
 **Lowest Common Ancestor (LCA) assignment:** Where top BLAST hits map to multiple species at equal
 or near-equal bitscore (within `top_bitscore_delta` = 2.0), the pipeline collapses the assignment
@@ -70,16 +75,31 @@ taxid, but ambiguous multi-taxon hits are collapsed by reference-defline genus s
 reliable for polyphyletic genus names). Production runs should supply `--taxdump_dir` for
 taxonomic rigour.
 
-**Reference database modes:** The pipeline supports multiple taxonomy modes:
+**Reference database modes:** The reference strategy is selected with `--reference_mode`, which is
+the canonical control. The legacy `--taxonomy_strategy` (`curated_only`/`curated_then_fallback`/
+`nt_only`) remains honoured and is mapped onto a reference mode when `--reference_mode` is left at
+its default, so existing configurations keep working. Each mode uses at most one fallback database:
 
-- **Mode A (curated panel):** Fast screening against the curated vertebrate panel. Limited by
-  panel completeness but appropriate for expected Ghanaian/peridomestic hosts.
-- **Mode B (broad BLAST):** User-supplied broader BLAST database (e.g., NCBI nt subset, custom
-  vertebrate mitochondrial database, combined curated + public reference).
-- **Mode C (remote fallback):** Optional fallback to NCBI `nt` when local assignment fails.
-- **Mode D (BOLD-aware COI):** For `co1_short` and `co1_long` markers, user-supplied BOLD-derived
-  COI FASTA database support is planned. Live BOLD API integration is lower priority due to
-  reproducibility concerns.
+- **Mode A — `curated_panel`:** Curated vertebrate panel only. Fast and offline; limited by panel
+  completeness but appropriate for expected Ghanaian/peridomestic hosts.
+- **Mode B — `broad_blast`:** User-supplied broad local BLAST database (`--blast_db`, e.g. an NCBI
+  nt subset, a custom vertebrate mitochondrial database, or a combined curated + public reference).
+  With `--enable_curated_panel_check true` (default) the curated panel is queried first and the
+  broad database resolves only the unresolved features; set it false to query the broad database
+  alone.
+- **Mode C — `remote_fallback`:** Curated panel first, then NCBI `nt` via `blastn -remote`
+  (`--remote_blast_db`, default `core_nt`) for features the curated panel cannot resolve. Gated by
+  `--enable_ncbi_remote_fallback`. Remote queries are **not reproducible by default** (the remote
+  database is versionless from the client side) and should be reserved for exploratory look-ups.
+- **Mode D — `bold_aware`:** Curated panel first, then a reproducible, project-local BOLD-derived
+  COI FASTA database (`--bold_fasta`, optionally `--bold_taxonomy`) built into a BLAST database at
+  runtime. It is effective for the COI markers (`co1_short`, `co1_long`); CytB queries against a COI
+  database simply return no hits and are unaffected. Live BOLD API querying (`--bold_mode
+  api_query`) is intentionally **not** implemented — a network-dependent lookup would make routine
+  runs non-reproducible; supply a downloaded BOLD FASTA instead.
+
+The reference database actually used, its SHA-256 checksum, the fallback chain, and the per-marker
+identity thresholds and NUMT risk are all recorded in `run_manifest.json` under `reference_database`.
 
 **NUMT risk:** Nuclear mitochondrial pseudogenes (NUMTs) can be co-amplified alongside genuine
 mitochondrial DNA. Risk by marker:

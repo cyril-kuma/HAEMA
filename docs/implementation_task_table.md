@@ -1,85 +1,61 @@
 # HÆMA Literature-Guided Re-engineering — Implementation Task Table
 
-Generated: 2026-06-30
+Generated: 2026-06-30 · **Statuses corrected: 2026-07-02**
 Source: docs/literature_guided_reengineering_report.md
 
-## Priority 1 — High impact, low effort (before thesis submission)
+Status legend: **DONE** (implemented, wired and verified to the extent possible offline) ·
+**SCAFFOLD+DOC** (config/docs present, deeper implementation is documented future work) ·
+**DEFERRED** (post-thesis) · **NOT STARTED**.
 
-| # | Recommendation | Priority | Files Likely Affected | Implementation Type | Status |
-|---|---------------|----------|----------------------|---------------------|--------|
-| A1 | Update docs/methods.md: framing, per-marker identity context, RAMBO threshold comparison, UMAP+RAMBO layering | High | docs/methods.md | Documentation | NOT STARTED |
-| A2 | Update docs/limitations.md: BOLD gap, NUMT risk, detection window, reference dependency | High | docs/limitations.md | Documentation | NOT STARTED |
-| A3 | Add marker_numt_risk lookup to run_manifest.json output | High | bin/build_run_manifest.py | Code | NOT STARTED |
-| A4 | Add mixed-host positive control entry to test samplesheet | High | assets/tests/ (or test data) | Testing | NOT STARTED |
+> Verification note: the pipeline cannot be run end-to-end in the dev environment (BLAST/Medaka
+> live only inside containers; no local `nt`/BOLD databases). "DONE" items are verified by Python
+> unit tests, functional script runs in a venv, `nextflow config`, and `nextflow run -preview -stub`
+> DAG builds for every reference mode — not by a full containerised run. See docs/implementation_report.md §10.
 
-## Priority 2 — Medium impact, moderate effort (before viva)
+## Priority 1 — before thesis submission
 
-| # | Recommendation | Priority | Files Likely Affected | Implementation Type | Status |
-|---|---------------|----------|----------------------|---------------------|--------|
-| B1 | Add Fisher's exact + Holm correction for HBI pairwise stratum comparisons | Medium | bin/compute_host_ecology_comparisons.py (new), pipeline/modules/local/ (new), nextflow_schema.json, nextflow.config | Code + Nextflow module | NOT STARTED |
-| B2 | Add multi-marker concordance analysis | Medium | bin/compute_marker_concordance.py (new), pipeline/modules/local/ (new), nextflow_schema.json, nextflow.config | Code + Nextflow module | NOT STARTED |
-| B3 | Add concordance heatmap figure | Medium | bin/build_main_figures.py or bin/build_supplementary_figures.py | Visualisation | NOT STARTED |
-| B4 | Pin haemavec-figures container digest in nextflow.config | Medium | nextflow.config | Config | NOT STARTED |
-| B5 | Redesign taxonomy workflow: support Mode A (curated panel), Mode B (broad BLAST), Mode C (remote fallback), Mode D (BOLD-aware) | High | pipeline/subworkflows/local/taxonomy/main.nf, pipeline/modules/local/blast/, bin/parse_blast_assignments.py, nextflow_schema.json, nextflow.config | Nextflow module + Code | NOT STARTED |
-| B6 | Add per-marker identity interpretation documentation | Medium | docs/methods.md, docs/output.md | Documentation | NOT STARTED |
-| B7 | Add reference database provenance reporting | Medium | bin/build_run_manifest.py, bin/build_report.py, pipeline/modules/local/run_manifest/ | Code | NOT STARTED |
-| B8 | Add QC matrix documentation | Medium | docs/methods.md | Documentation | NOT STARTED |
+| # | Recommendation | Type | Status |
+|---|---------------|------|--------|
+| A1 | Update docs/methods.md (framing, per-marker identity, RAMBO threshold, UMAP+RAMBO layering) | Documentation | **DONE** |
+| A2 | Update docs/limitations.md (BOLD gap, NUMT, detection window, reference dependency) | Documentation | **DONE** |
+| A3 | Add per-marker NUMT risk to run_manifest.json | Code | **DONE** (wired via parameters.json + verified) |
+| A4 | Add mixed-host positive control entry to test samplesheet | Testing | **NOT STARTED** (deferred; needs test-data curation) |
 
-## Priority 3 — Enhancement (post-thesis or supervised extension)
+## Priority 2 — before viva
 
-| # | Recommendation | Priority | Files Likely Affected | Implementation Type | Status |
-|---|---------------|----------|----------------------|---------------------|--------|
-| C1 | Add BOLD API as tertiary COI fallback | Low | bin/bold_query.py (new), pipeline/subworkflows/local/taxonomy/main.nf, nextflow_schema.json | Code + Nextflow module | NOT STARTED |
-| C2 | Add optional digestion_class metadata column | Low | nextflow_schema.json, validate_inputs.py, compute_ecological_indices.py | Config + Code | NOT STARTED |
-| C3 | Add formal Kruskal-Wallis test for host richness | Low | bin/compute_host_ecology_comparisons.py | Code | NOT STARTED |
+| # | Recommendation | Type | Status |
+|---|---------------|------|--------|
+| B1 | Fisher's exact + Holm HBI/mixed-feeding comparisons | Code + Nextflow module | **DONE** (`compute_host_ecology_comparisons.py` fixed to real schema + `HOST_ECOLOGY_COMPARISONS` module + tests) |
+| B2 | Multi-marker concordance analysis | Code + Nextflow module | **DONE** (`compute_marker_concordance.py` fixed to real schema + `MARKER_CONCORDANCE` module + tests) |
+| B3 | Concordance heatmap figure | Visualisation | **DONE** (figure S3 wired into `PUBLICATION_FIGURES` via optional `--concordance-table`) |
+| B4 | Pin haemavec-figures container digest | Config | **NOT STARTED** (needs a registry push first; see report §12) |
+| B5 | Taxonomy redesign: Modes A (curated) / B (broad) / C (remote) / D (BOLD) | Nextflow + Code | **DONE** (`reference_mode` canonical, wired; all 4 modes DAG-verified) |
+| B6 | Per-marker identity interpretation | Code + Documentation | **DONE** (enforced as a conservative confidence downgrade + documented) |
+| B7 | Reference database provenance reporting | Code | **DONE** (run_manifest `reference_database`: mode, per-DB SHA-256, fallback chain, thresholds) |
+| B8 | QC matrix documentation | Documentation | **DONE** (in limitations/methods; report §10 QC matrix) |
 
-## Documentation-Only Recommendations
+## Priority 3 — post-thesis / supervised extension
 
-| # | Recommendation | Priority | Files Likely Affected | Implementation Type | Status |
-|---|---------------|----------|----------------------|---------------------|--------|
-| D1 | Document length-fallback marker misassignment risk | Medium | docs/methods.md | Documentation | NOT STARTED |
-| D2 | Document UMAP denoising vs RAMBO layering | Medium | docs/methods.md | Documentation | NOT STARTED |
-| D3 | Document RAMBO 1% vs Logue 10% threshold | Medium | docs/methods.md, rambo output summary | Documentation | NOT STARTED |
-| D4 | Document per-marker identity interpretation (97% global, 98% BOLD COI standard) | Medium | docs/methods.md, run_manifest.json | Documentation | NOT STARTED |
+| # | Recommendation | Type | Status |
+|---|---------------|------|--------|
+| C1 | Live BOLD API tertiary fallback | Code + Nextflow | **SCAFFOLD+DOC** (`bold_mode=api_query` reserved; local BOLD FASTA implemented instead for reproducibility) |
+| C2 | Optional `digestion_class` metadata column | Config + Code | **DEFERRED** |
+| C3 | Kruskal-Wallis test for host richness | Code | **DEFERRED** (host-richness table emitted; formal test not yet added) |
 
-## Summary by Category
+## Documentation-only
 
-| Category | Count | Items |
-|----------|-------|-------|
-| Documentation | 7 | A1, A2, D1, D2, D3, D4, B6, B8 |
-| Code (Python) | 5 | A3, B1, B2, B7, C2, C3 |
-| Nextflow module | 4 | B1, B2, B5, C1 |
-| Config/schema | 4 | B4, B5, B7, C1, C2 |
-| Visualisation | 1 | B3 |
-| Testing | 1 | A4 |
-| Reference/database | 1 | B5 (BOLD) |
-| Release readiness | 1 | B4 |
-| **Total** | **24** | |
+| # | Recommendation | Status |
+|---|---------------|--------|
+| D1 | Length-fallback marker-misassignment risk | **DONE** |
+| D2 | UMAP denoising vs RAMBO layering | **DONE** |
+| D3 | RAMBO 1% vs Logue 10% threshold | **DONE** |
+| D4 | Per-marker identity interpretation (97% global, 98% BOLD COI) | **DONE** |
 
-## Implementation Order (refined)
+## Not in the original report but required by "make honest"
 
-### Phase 1: Documentation (no code changes)
-1. A2 — Update docs/limitations.md
-2. A1 — Update docs/methods.md
-3. D1-D4 — Additional documentation items
-4. B6 — Per-marker identity interpretation
-
-### Phase 2: Core taxonomy redesign
-5. B5 — Redesign taxonomy workflow (subworkflows/local/taxonomy/main.nf)
-6. B7 — Add reference database provenance reporting
-7. A3 — Add NUMT risk to run_manifest
-
-### Phase 3: New analytical modules
-8. B2 — Multi-marker concordance analysis
-9. B1 — Host ecology comparisons
-10. B3 — Concordance heatmap figure
-
-### Phase 4: Testing and release readiness
-11. A4 — Mixed-host positive control test
-12. B4 — Pin container digest
-13. Run tests
-
-### Phase 5: Post-thesis enhancements
-14. C1 — BOLD API integration
-15. C2 — Digestion class metadata
-16. C3 — Kruskal-Wallis test
+| Item | Status |
+|------|--------|
+| Restore test suite from assets/tests/ back to tests/ | **DONE** |
+| Fix concordance/ecology scripts that read non-existent columns (would silently mis-report) | **DONE** (+ new unit tests) |
+| Reconcile the redundant `reference_mode` vs `taxonomy_strategy` config surfaces | **DONE** (reference_mode canonical; taxonomy_strategy an alias) |
+| Correct the over-claiming implementation report + stale task table | **DONE** (this file + implementation_report.md) |

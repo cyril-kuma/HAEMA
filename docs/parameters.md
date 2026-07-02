@@ -57,11 +57,22 @@ speed; pass `--skip_taxonomy false` when you want the demo to exercise curated B
 | Parameter | Default | Description |
 |---|---|---|
 | `--skip_taxonomy` | false | Emit unassigned rows instead of running BLAST. |
-| `--taxonomy_strategy` | `curated_then_fallback` | `curated_only` / `curated_then_fallback` / `nt_only`. |
-| `--fallback_blast_db` | "" | External BLAST db prefix (e.g. `/path/nt/nt`) for unresolved features. |
+| `--reference_mode` | `curated_panel` | Canonical reference selector: `curated_panel` (A) / `broad_blast` (B) / `remote_fallback` (C) / `bold_aware` (D). See docs/methods.md. |
+| `--taxonomy_strategy` | `curated_then_fallback` | Legacy selector, still honoured and mapped onto `--reference_mode` when the latter is default. `curated_only` / `curated_then_fallback` / `nt_only`. |
+| `--blast_db` | "" | Broad local BLAST db prefix for Mode B (`broad_blast`). |
+| `--enable_curated_panel_check` | true | In Mode B, query the curated panel first and use `--blast_db` only for unresolved features. |
+| `--fallback_blast_db` | "" | Local external BLAST db prefix for unresolved features (legacy `curated_then_fallback`). |
+| `--enable_ncbi_remote_fallback` | true | Allow the NCBI remote fallback in Mode C (`remote_fallback`). |
+| `--remote_blast_db` | `core_nt` | NCBI-hosted db queried with `blastn -remote` in Mode C. Not reproducible by default. |
+| `--bold_fasta` / `--bold_taxonomy` | "" | BOLD-derived COI FASTA (+ optional taxonomy sidecar) for Mode D (`bold_aware`). |
+| `--bold_mode` | `local_fasta` | `local_fasta` (reproducible; the only implemented path) or `api_query` (documented future work). |
+| `--coi_species_identity_threshold` / `--cytb_species_identity_threshold` | 98 / 97 | Marker species-level confidence guard (downgrades `high`→`medium` below threshold; never loosens `--min_blast_identity`). |
 | `--blast_db_mount` | "" | Host dir mounted read-only so the db prefix is visible in containers. |
-| `--min_blast_identity` / `--min_blast_coverage` | 97 / 80 | Hit acceptance thresholds. |
+| `--min_blast_identity` / `--min_blast_coverage` | 97 / 80 | Global hit acceptance thresholds. |
 | `--taxonomy_assignment_method` | `conservative_lca` | `conservative_lca` / `taxid_lca` / `top_hit`. |
+| `--marker_numt_risk` | "" | JSON overriding per-marker NUMT risk labels (else defaults: co1_short=moderate, co1_long=low, cyt_b=low). |
+| `--enable_marker_concordance` | true | Compute multi-marker concordance per specimen. |
+| `--enable_host_ecology_comparisons` | true | Compute exploratory Fisher/Holm host-use comparisons between strata. |
 
 ## Contamination, host model & R outputs
 | Parameter | Default | Description |

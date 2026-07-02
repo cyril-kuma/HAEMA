@@ -85,12 +85,37 @@ open results/myrun/06_reports/bloodmeal_pipeline_report.html      # macOS; use x
 Look for `mixed_status = mixed_host` rows (a mosquito that fed on >1 host), check the negative
 control has no host calls, and confirm the positive control matches its known host.
 
-## 7. Tune for your depth
+## 7. Choose a reference mode (`--reference_mode`)
+
+The reference strategy is selected with `--reference_mode`; each mode uses at most one fallback
+database and the curated panel stays available as an optional first-line reference (see
+[`methods.md`](methods.md)).
+
+```bash
+# Mode A — curated panel only (fast, offline; default)
+nextflow run . -profile <p> --reference_mode curated_panel
+
+# Mode B — broad local BLAST database (curated pre-check on by default)
+nextflow run . -profile <p> --reference_mode broad_blast \
+  --blast_db /path/to/blast_db/nt/nt --blast_db_mount /path/to/blast_db
+
+# Mode C — curated panel + NCBI nt remote fallback (NOT reproducible; exploratory)
+nextflow run . -profile <p> --reference_mode remote_fallback --remote_blast_db core_nt
+
+# Mode D — curated panel + reproducible BOLD-derived COI FASTA (effective for COI markers)
+nextflow run . -profile <p> --reference_mode bold_aware \
+  --bold_fasta /path/to/bold_coi.fasta [--bold_taxonomy /path/to/bold_taxonomy.tsv]
+```
+
+The legacy `--taxonomy_strategy` still works and maps onto these modes automatically. The reference
+database used, its checksum and the fallback chain are recorded in `05_endpoint_files/run_manifest.json`.
+
+## 8. Tune for your depth
 
 - Shallow samples / want more sensitivity to minor hosts → lower
   `--mixed_denoise_min_cluster_fraction` (e.g. 0.02) and `--mixed_denoise_min_cluster_size`.
 - Over-splitting / too many clusters and slow taxonomy → raise both.
-- No host expected outside the panel → keep `--taxonomy_strategy curated_only` (faster, frozen).
+- No host expected outside the panel → keep `--reference_mode curated_panel` (faster, frozen).
 
 ## 8. Validate & test (developers / before a release)
 

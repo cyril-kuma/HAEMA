@@ -44,11 +44,23 @@ The RAMBO-style abundance/evidence layer. One row per retained host per sample/m
 - `asv_count_table.tsv` — feature × sample count matrix.
 - `sample_level_summary.tsv` / `marker_level_summary.tsv` — per-sample / per-marker rollups.
 - `contamination_flags.tsv` — features flagged against negative-control background.
+- `marker_concordance.tsv` — one row per specimen: markers with signal, host call per marker,
+  species/genus agreement, `concordance_status`, and `possible_numt_flag` /
+  `possible_mixed_meal_flag` caution flags (from `MARKER_CONCORDANCE`; `enable_marker_concordance`).
+  A NUMT flag is a caution indicator, not proof of contamination. Summary in
+  `06_reports/marker_concordance_summary.json`.
+- `host_ecology_comparisons/` — exploratory host-use statistics (from `HOST_ECOLOGY_COMPARISONS`;
+  `enable_host_ecology_comparisons`): `pairwise_hbi_comparisons.tsv`,
+  `pairwise_hbi_species_comparisons.tsv`, `pairwise_mixed_feeding_comparisons.tsv` (Fisher's exact,
+  Holm-corrected) and `host_richness_by_zone.tsv`. **Exploratory unless pre-specified as primary;**
+  small-n strata are flagged. Summary in `06_reports/host_use_statistical_tests_summary.json`.
 - `bloodmeal_phyloseq.rds`, `bloodmeal_ecology_data.rds`, `*_decontaminated.rds` — R objects
   (formal phyloseq/decontam with `haema-r`, documented fallback objects otherwise). The phyloseq
   object is visualised directly by the `PHYLOSEQ_FIGURES` step (figures 11–15 in `07_figures/`).
 - `run_manifest.json` — parameters, container images, output paths, workflow session — your
-  provenance record for the methods section.
+  provenance record for the methods section. Its `reference_database` section records the reference
+  mode, each database used (name, type, source, path, SHA-256, sequence count), the fallback chain,
+  the per-marker identity thresholds, and the per-marker NUMT risk labels.
 
 ### `06_reports/positive_control_check.tsv` — control / recovery check
 One row per control (any sample with a declared `expected_host_scientific_name`), comparing the
