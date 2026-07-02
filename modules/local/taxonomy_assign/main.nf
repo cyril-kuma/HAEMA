@@ -17,6 +17,9 @@ process ASSIGN_TAXONOMY {
         --counts '${asv_counts}' \\
         --blast '${blast_tsv}' \\
         --blast-source '${params.reference_db_label}' \\
+        --marker '${meta.marker}' \\
+        --coi-species-identity '${params.coi_species_identity_threshold}' \\
+        --cytb-species-identity '${params.cytb_species_identity_threshold}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --reference-taxonomy '${reference_taxonomy}' \\
@@ -37,6 +40,9 @@ process ASSIGN_TAXONOMY {
         --counts '${asv_counts}' \\
         --blast '${blast_tsv}' \\
         --blast-source '${params.reference_db_label}' \\
+        --marker '${meta.marker}' \\
+        --coi-species-identity '${params.coi_species_identity_threshold}' \\
+        --cytb-species-identity '${params.cytb_species_identity_threshold}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --reference-taxonomy '${reference_taxonomy}' \\
@@ -59,6 +65,7 @@ process ASSIGN_TAXONOMY_WITH_FALLBACK {
 
     input:
     tuple val(meta), path(asv_counts), path(primary_blast_tsv), path(fallback_blast_tsv), path(reference_taxonomy)
+    val fallback_source
 
     output:
     path "${meta.id}.${meta.marker}.${meta.cluster_id ?: 'all'}.taxonomy.tsv", emit: assignments
@@ -71,7 +78,10 @@ process ASSIGN_TAXONOMY_WITH_FALLBACK {
         --blast '${primary_blast_tsv}' \\
         --blast-source '${params.reference_db_label}' \\
         --fallback-blast '${fallback_blast_tsv}' \\
-        --fallback-source '${params.fallback_blast_db_label}' \\
+        --fallback-source '${fallback_source}' \\
+        --marker '${meta.marker}' \\
+        --coi-species-identity '${params.coi_species_identity_threshold}' \\
+        --cytb-species-identity '${params.cytb_species_identity_threshold}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --reference-taxonomy '${reference_taxonomy}' \\
@@ -93,7 +103,8 @@ process ASSIGN_TAXONOMY_WITH_FALLBACK {
         --blast '${primary_blast_tsv}' \\
         --blast-source '${params.reference_db_label}' \\
         --fallback-blast '${fallback_blast_tsv}' \\
-        --fallback-source '${params.fallback_blast_db_label}' \\
+        --fallback-source '${fallback_source}' \\
+        --marker '${meta.marker}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --reference-taxonomy '${reference_taxonomy}' \\
@@ -127,6 +138,9 @@ process ASSIGN_TAXONOMY_EXTERNAL_DB {
         --counts '${asv_counts}' \\
         --blast '${blast_tsv}' \\
         --blast-source '${params.blast_db_label}' \\
+        --marker '${meta.marker}' \\
+        --coi-species-identity '${params.coi_species_identity_threshold}' \\
+        --cytb-species-identity '${params.cytb_species_identity_threshold}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --min-identity '${params.min_blast_identity}' \\
@@ -146,6 +160,9 @@ process ASSIGN_TAXONOMY_EXTERNAL_DB {
         --counts '${asv_counts}' \\
         --blast '${blast_tsv}' \\
         --blast-source '${params.blast_db_label}' \\
+        --marker '${meta.marker}' \\
+        --coi-species-identity '${params.coi_species_identity_threshold}' \\
+        --cytb-species-identity '${params.cytb_species_identity_threshold}' \\
         --assignment-method '${params.taxonomy_assignment_method}' \\
         --taxdump-dir '${params.taxdump_dir}' \\
         --min-identity '${params.min_blast_identity}' \\

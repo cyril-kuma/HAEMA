@@ -8,6 +8,7 @@ process BLASTN_EXTERNAL_ASVS {
     tuple val(meta), path(asv_fasta), path(asv_counts)
     val db_prefix
     val db_label
+    val remote
 
     output:
     tuple val(meta), path(asv_counts), path("${meta.id}.${meta.marker}.${meta.cluster_id ?: 'all'}.external.blast.tsv"), emit: blast
@@ -17,6 +18,10 @@ process BLASTN_EXTERNAL_ASVS {
     !params.skip_taxonomy
 
     script:
+    // remote == 'true' queries an NCBI-hosted database (e.g. core_nt) over the network via
+    // `-remote`; the DB then need not exist locally. Remote queries are NOT reproducible by
+    // default (the remote database is versionless from the client side) — Mode C only.
+    def remote_flag = (remote?.toString() == 'true') ? '-remote' : ''
     """
     if [[ ! -s '${asv_fasta}' ]]; then
         : > ${meta.id}.${meta.marker}.${meta.cluster_id ?: 'all'}.external.blast.tsv
@@ -24,6 +29,7 @@ process BLASTN_EXTERNAL_ASVS {
         blastn \\
             -query '${asv_fasta}' \\
             -db '${db_prefix}' \\
+            ${remote_flag} \\
             -max_target_seqs ${params.blast_max_target_seqs} \\
             -evalue ${params.blast_evalue} \\
             ${params.blast_extra_args} \\
@@ -36,6 +42,7 @@ process BLASTN_EXTERNAL_ASVS {
       blast: "\$(blastn -version | head -n 1 | sed 's/^blastn: //')"
       database_label: "${db_label}"
       database_prefix: "${db_prefix}"
+      remote: "${(remote?.toString() == 'true') ? 'true' : 'false'}"
     END_VERSIONS
     """
 
@@ -47,6 +54,7 @@ process BLASTN_EXTERNAL_ASVS {
       stub: true
       database_label: "${db_label}"
       database_prefix: "${db_prefix}"
+      remote: "${(remote?.toString() == 'true') ? 'true' : 'false'}"
     END
     """
 }

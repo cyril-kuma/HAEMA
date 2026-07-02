@@ -289,6 +289,12 @@ def main():
     parser.add_argument("--blast-source", default="curated_panel")
     parser.add_argument("--fallback-blast", default="")
     parser.add_argument("--fallback-source", default="nt")
+    parser.add_argument("--marker", default="",
+                        help="Marker name (co1_short/co1_long/cyt_b); selects the species-level identity threshold.")
+    parser.add_argument("--coi-species-identity", type=float, default=0.0,
+                        help="Min %% identity for a COI species-level call to keep 'high' confidence (BOLD standard). 0 disables.")
+    parser.add_argument("--cytb-species-identity", type=float, default=0.0,
+                        help="Min %% identity for a CytB species-level call to keep 'high' confidence. 0 disables.")
     parser.add_argument("--assignment-method", default="conservative_lca")
     parser.add_argument("--taxdump-dir", default="")
     parser.add_argument("--reference-taxonomy", default="")
@@ -297,6 +303,29 @@ def main():
     parser.add_argument("--top-bitscore-delta", type=float, required=True)
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
+
+    # Marker-specific species-level identity threshold. COI is held to the stricter BOLD
+    # standard (Reeves et al. 2018; Santos et al. 2019); CytB to its own threshold
+    # (Townzen et al. 2008). This never loosens the global pass filter (min_blast_identity);
+    # it only downgrades an otherwise species-level 'high' call to 'medium' when the top
+    # identity is below the marker's species threshold — a conservative guard against
+    # overcalling species. 0 disables the guard for that marker.
+    marker = (args.marker or "").lower()
+    if marker.startswith("co1") or marker.startswith("coi"):
+        species_identity_threshold = args.coi_species_identity
+    elif "cyt" in marker:
+        species_identity_threshold = args.cytb_species_identity
+    else:
+        species_identity_threshold = 0.0
+
+    def apply_marker_species_guard(result):
+        if species_identity_threshold and result.get("confidence") == "high":
+            try:
+                if float(result.get("pident") or 0.0) < species_identity_threshold:
+                    result["confidence"] = "medium"
+            except (TypeError, ValueError):
+                pass
+        return result
 
     counts = read_counts(args.counts)
     reference_taxonomy = read_reference_taxonomy(args.reference_taxonomy)
@@ -347,7 +376,7 @@ def main():
         for row in counts:
             if row.get("retained") != "true":
                 continue
-            result = assign(
+            result = apply_marker_species_guard(assign(
                 primary_hits.get(row["asv_id"], []),
                 args.min_identity,
                 args.min_coverage,
@@ -355,10 +384,10 @@ def main():
                 args.blast_source,
                 args.assignment_method,
                 taxonomy,
-            )
+            ))
             if args.fallback_blast and result["assignment_status"] == "no_confident_blast_hit":
                 primary_status = result["assignment_status"]
-                fallback_result = assign(
+                fallback_result = apply_marker_species_guard(assign(
                     fallback_hits.get(row["asv_id"], []),
                     args.min_identity,
                     args.min_coverage,
@@ -366,7 +395,7 @@ def main():
                     args.fallback_source,
                     args.assignment_method,
                     taxonomy,
-                )
+                ))
                 if fallback_result["assignment_status"] != "no_confident_blast_hit":
                     result = fallback_result
                     result["fallback_used"] = "true"

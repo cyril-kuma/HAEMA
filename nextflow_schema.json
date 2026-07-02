@@ -316,7 +316,12 @@
                 "fallback_blast_db": {
                     "type": "string",
                     "default": "",
-                    "description": "External BLAST database prefix used as fallback after the curated panel, for example /path/to/blast_db/nt/nt."
+                    "description": "Local external BLAST database prefix used as fallback after the curated panel, for example /path/to/blast_db/nt/nt."
+                },
+                "remote_blast_db": {
+                    "type": "string",
+                    "default": "core_nt",
+                    "description": "NCBI-hosted database name queried with blastn -remote in reference_mode remote_fallback (Mode C), e.g. core_nt or nt. Remote queries are not reproducible by default."
                 },
                 "blast_db_mount": {
                     "type": "string",

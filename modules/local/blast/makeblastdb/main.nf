@@ -1,15 +1,16 @@
 process MAKE_BLAST_DB {
     label 'process_medium'
-    tag 'reference'
+    tag "${db_tag}"
 
-    publishDir "${params.outdir}/04_taxonomy/blast_db", mode: 'copy'
+    publishDir "${params.outdir}/04_taxonomy/blast_db/${db_tag}", mode: 'copy'
 
     input:
     path reference_fasta
     path taxid_map
+    val db_tag
 
     output:
-    tuple path('blastdb'), val('bloodmeal_ref'), emit: db
+    tuple path('blastdb'), val("${db_tag}"), emit: db
     path 'versions.yml', emit: versions
 
     when:
@@ -31,7 +32,7 @@ process MAKE_BLAST_DB {
     # NB: this does NOT disable taxid-backed LCA — the sidecar backfills taxids, so
     # --taxonomy_assignment_method taxid_lca + --taxdump_dir works against the curated panel
     # (proven by tests/test_taxid_assignment.py). The nt fallback supplies its own native staxids.
-    makeblastdb -in ${reference_fasta} -dbtype nucl -out blastdb/bloodmeal_ref
+    makeblastdb -in ${reference_fasta} -dbtype nucl -out blastdb/${db_tag}
 
     cat > versions.yml <<-END_VERSIONS
     "${task.process}":
@@ -44,7 +45,7 @@ process MAKE_BLAST_DB {
     stub:
     """
     mkdir -p blastdb
-    touch blastdb/bloodmeal_ref.nhr blastdb/bloodmeal_ref.nin blastdb/bloodmeal_ref.nsq
+    touch blastdb/${db_tag}.nhr blastdb/${db_tag}.nin blastdb/${db_tag}.nsq
     cat > versions.yml <<-END
     "${task.process}":
       stub: true
