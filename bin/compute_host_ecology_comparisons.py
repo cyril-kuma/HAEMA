@@ -34,15 +34,117 @@ def read_tsv(path):
         return list(csv.DictReader(fh, delimiter='\t'))
 
 
-def read_metadata(path):
-    """Read samplesheet metadata and return dict keyed by specimen_id."""
-    rows = read_tsv(path)
-    meta = {}
-    for row in rows:
-        key = row.get('specimen_id') or row.get('sample_id') or row.get('barcode_id', '')
-        if key:
-            meta[key] = row
-    return meta
+HUMAN = 'Homo sapiens'
+UNRESOLVED_HOSTS = {'', 'unassigned', 'ambiguous', 'no_host_signal', 'unresolved'}
+
+
+def norm_taxon(name):
+    """Normalise a taxon name for comparison: lowercase, strip, collapse whitespace."""
+    return ' '.join((name or '').strip().lower().replace('_', ' ').split())
+
+
+def parse_year_month(value):
+    """Parse a YYYY-MM(-DD) collection date into (year, month); None if unparseable."""
+    text = (value or '').strip()
+    if len(text) < 7:
+        return None
+    try:
+        year = int(text[0:4])
+        month = int(text[5:7])
+    except ValueError:
+        return None
+    if 1 <= month <= 12:
+        return year, month
+    return None
+
+
+def build_host_sets(host_call_rows):
+    """Aggregate the RAMBO host-call table to {sample_uid: set(host_taxa)}.
+
+    Mirrors compute_ecological_indices.py: keeps only control_status == 'sample',
+    drops unresolved/unassigned host calls, and collapses the (possibly multi-row,
+    mixed-host, multi-marker) table to one host SET per specimen so a mosquito is
+    counted once regardless of how many markers or hosts it carries. Also returns the
+    set of all field-sample specimen ids (including tested-but-unidentified ones).
+    """
+    host_sets = defaultdict(set)
+    all_uids = set()
+    for r in host_call_rows:
+        if (r.get('control_status') or '').strip() != 'sample':
+            continue
+        uid = r.get('sample_uid', '')
+        if not uid:
+            continue
+        all_uids.add(uid)
+        host = (r.get('host_assignment') or '').strip()
+        if norm_taxon(host) not in UNRESOLVED_HOSTS:
+            host_sets[uid].add(host)
+    return host_sets, all_uids
+
+
+def build_strata_maps(master_rows, zone_column, species_column, date_column, wet_months):
+    """Map sample_uid -> stratum level for each stratification, from the master endpoint.
+
+    Mirrors compute_ecological_indices.py exactly (sample_type == 'sample', one value
+    per uid, season derived from the collection month). Returns an ordered dict of
+    {stratum_type: {sample_uid: level}}.
+    """
+    zone_of, species_of, season_of = {}, {}, {}
+    for r in master_rows:
+        if r.get('sample_type') != 'sample':
+            continue
+        uid = r.get('sample_uid', '')
+        if not uid or uid in zone_of:
+            continue
+        zone_of[uid] = (r.get(zone_column) or '').strip()
+        species_of[uid] = (r.get(species_column) or '').strip()
+        ym = parse_year_month(r.get(date_column, ''))
+        if ym:
+            _, month = ym
+            season_of[uid] = 'wet' if month in wet_months else 'dry'
+    return {
+        'ecological_zone': zone_of,
+        'sibling_species': species_of,
+        'season': season_of,
+    }
+
+
+def counts_by_stratum(host_sets, all_uids, uid_to_level):
+    """Count identified specimens, human-positive, mixed and host richness per stratum.
+
+    Denominator is host-identified field specimens (non-empty host set); tested-but-
+    unidentified specimens are excluded from these proportions, consistent with the
+    Human Blood Index definition used in compute_ecological_indices.py.
+    """
+    agg = defaultdict(lambda: {'n': 0, 'n_human': 0, 'n_mixed': 0, 'hosts': set()})
+    for uid in all_uids:
+        level = uid_to_level.get(uid, '')
+        if not level:
+            continue
+        hs = host_sets.get(uid)
+        if not hs:
+            continue
+        d = agg[level]
+        d['n'] += 1
+        if HUMAN in hs:
+            d['n_human'] += 1
+        if len(hs) >= 2:
+            d['n_mixed'] += 1
+        d['hosts'] |= hs
+    result = {}
+    for level, d in agg.items():
+        n = d['n']
+        result[level] = {
+            'n': n,
+            'n_human': d['n_human'],
+            'n_mixed': d['n_mixed'],
+            'hbi': round(d['n_human'] / n, 6) if n else 0.0,
+            'mixed_rate': round(d['n_mixed'] / n, 6) if n else 0.0,
+            'richness': len(d['hosts']),
+            'hosts': '|'.join(sorted(d['hosts'])),
+            'small_n_warning': n < 5,
+        }
+    return result
 
 
 def fisher_exact_2x2(a, b, c, d):
@@ -125,103 +227,6 @@ def holm_correction(p_values):
     return corrected
 
 
-def compute_hbi_by_stratum(host_call_rows, metadata, stratum_column):
-    """Compute HBI (Human Blood Index) by stratum.
-    
-    HBI = proportion of host-identified mosquitoes with human-containing blood meal.
-    Controls are excluded.
-    
-    Returns:
-        dict: {stratum_value: {'n': total, 'n_human': human_count, 'hbi': proportion}}
-    """
-    hbi_by_stratum = defaultdict(lambda: {'n': 0, 'n_human': 0})
-    
-    for row in host_call_rows:
-        specimen_id = row.get('specimen_id') or row.get('sample_id', '')
-        control_status = row.get('control_status', '') or ''
-        
-        # Exclude controls
-        if control_status in ('extraction_blank', 'pcr_negative', 'positive_control'):
-            continue
-        
-        # Get stratum value from metadata
-        meta = metadata.get(specimen_id, {})
-        stratum_value = meta.get(stratum_column, 'unknown')
-        
-        # Check if host-identified
-        host_call = row.get('host_call', '') or row.get('scientific_name', '') or ''
-        if not host_call or host_call in ('', 'unassigned', 'no_host_signal'):
-            continue
-        
-        hbi_by_stratum[stratum_value]['n'] += 1
-        
-        # Check for human in host call (may be mixed)
-        if 'homo sapiens' in host_call.lower():
-            hbi_by_stratum[stratum_value]['n_human'] += 1
-    
-    # Compute HBI proportions
-    result = {}
-    for stratum, counts in hbi_by_stratum.items():
-        n = counts['n']
-        n_human = counts['n_human']
-        hbi = n_human / n if n > 0 else 0.0
-        result[stratum] = {
-            'n': n,
-            'n_human': n_human,
-            'hbi': round(hbi, 6),
-            'small_n_warning': n < 5,
-        }
-    
-    return result
-
-
-def compute_mixed_feeding_by_stratum(host_call_rows, metadata, stratum_column):
-    """Compute mixed-feeding rate by stratum.
-    
-    Mixed feeding = proportion of host-identified mosquitoes with >= 2 distinct host taxa.
-    Controls are excluded.
-    
-    Returns:
-        dict: {stratum_value: {'n': total, 'n_mixed': mixed_count, 'rate': proportion}}
-    """
-    mixed_by_stratum = defaultdict(lambda: {'n': 0, 'n_mixed': 0})
-    
-    for row in host_call_rows:
-        specimen_id = row.get('specimen_id') or row.get('sample_id', '')
-        control_status = row.get('control_status', '') or ''
-        
-        if control_status in ('extraction_blank', 'pcr_negative', 'positive_control'):
-            continue
-        
-        meta = metadata.get(specimen_id, {})
-        stratum_value = meta.get(stratum_column, 'unknown')
-        
-        host_call = row.get('host_call', '') or row.get('scientific_name', '') or ''
-        if not host_call or host_call in ('', 'unassigned', 'no_host_signal'):
-            continue
-        
-        mixed_by_stratum[stratum_value]['n'] += 1
-        
-        # Check for mixed host (may contain multiple hosts)
-        mixed_status = row.get('mixed_status', '') or ''
-        if mixed_status == 'mixed_host':
-            mixed_by_stratum[stratum_value]['n_mixed'] += 1
-    
-    result = {}
-    for stratum, counts in mixed_by_stratum.items():
-        n = counts['n']
-        n_mixed = counts['n_mixed']
-        rate = n_mixed / n if n > 0 else 0.0
-        result[stratum] = {
-            'n': n,
-            'n_mixed': n_mixed,
-            'mixed_rate': round(rate, 6),
-            'small_n_warning': n < 5,
-        }
-    
-    return result
-
-
 def pairwise_comparisons(stratum_data, value_key, label):
     """Compute pairwise Fisher's exact tests between all strata pairs.
     
@@ -265,10 +270,9 @@ def pairwise_comparisons(stratum_data, value_key, label):
             'rate_1': round(x1 / n1, 6) if n1 > 0 else 0.0,
             'rate_2': round(x2 / n2, 6) if n2 > 0 else 0.0,
             'odds_ratio': round(odds_ratio, 4) if odds_ratio else None,
-            'raw_p_value': round(raw_p, 6) if raw_p else None,
+            'raw_p_value': round(raw_p, 6) if raw_p is not None else None,
             'corrected_p_value': None,  # Filled by Holm correction
-            'significant_005': None,  # Filled by Holm correction
-            'significant_050': None,  # Filled by Holm correction
+            'significant_holm_005': None,  # Filled by Holm correction (corrected p < 0.05)
             'small_n_warning': (n1 < 5) or (n2 < 5),
             'test': 'fishers_exact',
             'test_family': label,
@@ -277,41 +281,31 @@ def pairwise_comparisons(stratum_data, value_key, label):
     return comparisons
 
 
-def compute_host_richness_by_stratum(host_call_rows, metadata, stratum_column):
-    """Compute host richness (S) by stratum.
-    
-    Returns:
-        dict: {stratum_value: {'n': n_mosquitoes, 'richness': S}}
-    """
-    richness_by_stratum = defaultdict(lambda: {'n': 0, 'hosts': set()})
-    
-    for row in host_call_rows:
-        specimen_id = row.get('specimen_id') or row.get('sample_id', '')
-        control_status = row.get('control_status', '') or ''
-        
-        if control_status in ('extraction_blank', 'pcr_negative', 'positive_control'):
-            continue
-        
-        meta = metadata.get(specimen_id, {})
-        stratum_value = meta.get(stratum_column, 'unknown')
-        
-        host_call = row.get('host_call', '') or row.get('scientific_name', '') or ''
-        if not host_call or host_call in ('', 'unassigned', 'no_host_signal'):
-            continue
-        
-        richness_by_stratum[stratum_value]['n'] += 1
-        richness_by_stratum[stratum_value]['hosts'].add(host_call.lower())
-    
-    result = {}
-    for stratum, data in richness_by_stratum.items():
-        result[stratum] = {
-            'n': data['n'],
-            'richness': len(data['hosts']),
-            'hosts': '|'.join(sorted(data['hosts'])),
-            'small_n_warning': data['n'] < 5,
-        }
-    
-    return result
+def apply_holm(comparisons):
+    """Fill corrected_p_value / significance flags in place via Holm-Bonferroni."""
+    holm = holm_correction([(i, c['raw_p_value']) for i, c in enumerate(comparisons)
+                            if c['raw_p_value'] is not None])
+    for orig_idx, _raw_p, corr_p in holm:
+        if orig_idx < len(comparisons):
+            comparisons[orig_idx]['corrected_p_value'] = round(corr_p, 6)
+            comparisons[orig_idx]['significant_holm_005'] = corr_p < 0.05
+    return comparisons
+
+
+COMPARISON_FIELDS = [
+    'comparison', 'stratum_1', 'stratum_2', 'n_1', 'n_2', 'event_1', 'event_2',
+    'rate_1', 'rate_2', 'odds_ratio', 'raw_p_value', 'corrected_p_value',
+    'significant_holm_005', 'small_n_warning', 'test', 'test_family',
+]
+
+
+def write_comparisons(path, comparisons):
+    """Write a comparison table, always emitting a header (even when empty)."""
+    with open(path, 'w', newline='') as fh:
+        writer = csv.DictWriter(fh, fieldnames=COMPARISON_FIELDS, delimiter='\t', extrasaction='ignore')
+        writer.writeheader()
+        for row in comparisons:
+            writer.writerow(row)
 
 
 def main():
@@ -319,149 +313,101 @@ def main():
         description='Compute host ecology statistical comparisons for HÆMA blood-meal data'
     )
     parser.add_argument('--host-call-table', required=True,
-                        help='Path to rambo_host_call_table.tsv or final host-call table')
-    parser.add_argument('--metadata', required=True,
-                        help='Path to samplesheet metadata CSV/TSV')
+                        help='Path to rambo_host_call_table.tsv')
+    parser.add_argument('--master-endpoint', required=True,
+                        help='Path to bloodmeal_master_endpoint.tsv (source of per-specimen strata)')
     parser.add_argument('--zone-column', default='collection_region',
-                        help='Samplesheet column for ecological zone stratification')
+                        help='master-endpoint column for ecological zone stratification')
     parser.add_argument('--species-column', default='sibling_species',
-                        help='Samplesheet column for sibling species stratification')
-    parser.add_argument('--season-column', default='season',
-                        help='Samplesheet column for season stratification (wet/dry)')
+                        help='master-endpoint column for sibling species stratification')
+    parser.add_argument('--date-column', default='collection_date',
+                        help='master-endpoint column for collection date (used to derive season)')
+    parser.add_argument('--wet-months', default='4,5,6,7,8,9,10',
+                        help='Comma-separated month numbers classified as wet season')
     parser.add_argument('--output-dir', required=True,
                         help='Output directory for comparison tables')
     parser.add_argument('--exploratory-note', default='All statistical comparisons are exploratory unless pre-specified as primary in the study protocol.',
                         help='Note to include in output about exploratory nature')
     args = parser.parse_args()
-    
+
     # Read input data
     host_call_rows = read_tsv(args.host_call_table)
-    metadata = read_metadata(args.metadata)
-    
-    # Ensure output directory exists
+    master_rows = read_tsv(args.master_endpoint)
+    wet_months = {int(m) for m in str(args.wet_months).split(',') if m.strip().isdigit()}
+
     Path(args.output_dir).mkdir(parents=True, exist_ok=True)
-    
-    # === HBI comparisons by ecological zone ===
-    hbi_by_zone = compute_hbi_by_stratum(host_call_rows, metadata, args.zone_column)
-    hbi_zone_comparisons = pairwise_comparisons(hbi_by_zone, 'n_human', 'hbi_zone')
-    
-    # Apply Holm correction
-    holm_hbi = holm_correction([(i, c['raw_p_value']) for i, c in enumerate(hbi_zone_comparisons) if c['raw_p_value'] is not None])
-    for idx, (orig_idx, raw_p, corr_p) in enumerate(holm_hbi):
-        if orig_idx < len(hbi_zone_comparisons):
-            hbi_zone_comparisons[orig_idx]['corrected_p_value'] = round(corr_p, 6)
-            hbi_zone_comparisons[orig_idx]['significant_005'] = corr_p < 0.05
-            hbi_zone_comparisons[orig_idx]['significant_050'] = corr_p < 0.050
-    
-    # Write HBI zone comparisons
-    if hbi_zone_comparisons:
-        fieldnames = list(hbi_zone_comparisons[0].keys())
-        outpath = Path(args.output_dir) / 'pairwise_hbi_comparisons.tsv'
-        with open(outpath, 'w', newline='') as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
-            writer.writeheader()
-            for row in hbi_zone_comparisons:
-                writer.writerow(row)
-        print(f"Wrote HBI zone comparisons: {outpath}")
-    
-    # === HBI comparisons by sibling species ===
-    hbi_by_species = compute_hbi_by_stratum(host_call_rows, metadata, args.species_column)
-    hbi_species_comparisons = pairwise_comparisons(hbi_by_species, 'n_human', 'hbi_species')
-    
-    holm_hbi_sp = holm_correction([(i, c['raw_p_value']) for i, c in enumerate(hbi_species_comparisons) if c['raw_p_value'] is not None])
-    for idx, (orig_idx, raw_p, corr_p) in enumerate(holm_hbi_sp):
-        if orig_idx < len(hbi_species_comparisons):
-            hbi_species_comparisons[orig_idx]['corrected_p_value'] = round(corr_p, 6)
-            hbi_species_comparisons[orig_idx]['significant_005'] = corr_p < 0.05
-            hbi_species_comparisons[orig_idx]['significant_050'] = corr_p < 0.050
-    
-    if hbi_species_comparisons:
-        fieldnames = list(hbi_species_comparisons[0].keys())
-        outpath = Path(args.output_dir) / 'pairwise_hbi_species_comparisons.tsv'
-        with open(outpath, 'w', newline='') as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
-            writer.writeheader()
-            for row in hbi_species_comparisons:
-                writer.writerow(row)
-        print(f"Wrote HBI species comparisons: {outpath}")
-    
-    # === Mixed-feeding comparisons by zone ===
-    mixed_by_zone = compute_mixed_feeding_by_stratum(host_call_rows, metadata, args.zone_column)
-    mixed_zone_comparisons = pairwise_comparisons(mixed_by_zone, 'n_mixed', 'mixed_feeding_zone')
-    
-    holm_mixed = holm_correction([(i, c['raw_p_value']) for i, c in enumerate(mixed_zone_comparisons) if c['raw_p_value'] is not None])
-    for idx, (orig_idx, raw_p, corr_p) in enumerate(holm_mixed):
-        if orig_idx < len(mixed_zone_comparisons):
-            mixed_zone_comparisons[orig_idx]['corrected_p_value'] = round(corr_p, 6)
-            mixed_zone_comparisons[orig_idx]['significant_005'] = corr_p < 0.05
-            mixed_zone_comparisons[orig_idx]['significant_050'] = corr_p < 0.050
-    
-    if mixed_zone_comparisons:
-        fieldnames = list(mixed_zone_comparisons[0].keys())
-        outpath = Path(args.output_dir) / 'pairwise_mixed_feeding_comparisons.tsv'
-        with open(outpath, 'w', newline='') as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
-            writer.writeheader()
-            for row in mixed_zone_comparisons:
-                writer.writerow(row)
-        print(f"Wrote mixed-feeding comparisons: {outpath}")
-    
-    # === Host richness by zone ===
-    richness_by_zone = compute_host_richness_by_stratum(host_call_rows, metadata, args.zone_column)
-    
-    # Write richness summary
-    richness_rows = []
-    for stratum, data in richness_by_zone.items():
-        richness_rows.append({
-            'stratum': stratum,
-            'n_mosquitoes': data['n'],
-            'host_richness_S': data['richness'],
-            'hosts': data['hosts'],
-            'small_n_warning': data['small_n_warning'],
-        })
-    
-    if richness_rows:
-        outpath = Path(args.output_dir) / 'host_richness_by_zone.tsv'
-        with open(outpath, 'w', newline='') as fh:
-            writer = csv.DictWriter(fh, fieldnames=list(richness_rows[0].keys()), delimiter='\t', extrasaction='ignore')
-            writer.writeheader()
-            for row in richness_rows:
-                writer.writerow(row)
-        print(f"Wrote host richness summary: {outpath}")
-    
+
+    # Aggregate host calls to one host-set per field specimen (controls excluded), and map
+    # each specimen to its zone / sibling-species / season stratum from the master endpoint.
+    host_sets, all_uids = build_host_sets(host_call_rows)
+    strata = build_strata_maps(master_rows, args.zone_column, args.species_column,
+                               args.date_column, wet_months)
+
+    zone_stats = counts_by_stratum(host_sets, all_uids, strata['ecological_zone'])
+    species_stats = counts_by_stratum(host_sets, all_uids, strata['sibling_species'])
+    season_stats = counts_by_stratum(host_sets, all_uids, strata['season'])
+
+    # === HBI comparisons: zones, sibling species, seasons ===
+    hbi_zone_comparisons = apply_holm(pairwise_comparisons(zone_stats, 'n_human', 'hbi_zone'))
+    hbi_species_comparisons = apply_holm(pairwise_comparisons(species_stats, 'n_human', 'hbi_species'))
+    hbi_season_comparisons = apply_holm(pairwise_comparisons(season_stats, 'n_human', 'hbi_season'))
+    write_comparisons(Path(args.output_dir) / 'pairwise_hbi_comparisons.tsv',
+                      hbi_zone_comparisons + hbi_season_comparisons)
+    write_comparisons(Path(args.output_dir) / 'pairwise_hbi_species_comparisons.tsv',
+                      hbi_species_comparisons)
+
+    # === Mixed-feeding comparisons between zones ===
+    mixed_zone_comparisons = apply_holm(pairwise_comparisons(zone_stats, 'n_mixed', 'mixed_feeding_zone'))
+    write_comparisons(Path(args.output_dir) / 'pairwise_mixed_feeding_comparisons.tsv',
+                      mixed_zone_comparisons)
+
+    # === Host richness by zone (descriptive; Kruskal-Wallis optional) ===
+    richness_fields = ['stratum', 'n_specimens', 'host_richness_S', 'hosts', 'small_n_warning']
+    with open(Path(args.output_dir) / 'host_richness_by_zone.tsv', 'w', newline='') as fh:
+        writer = csv.DictWriter(fh, fieldnames=richness_fields, delimiter='\t', extrasaction='ignore')
+        writer.writeheader()
+        for stratum, data in sorted(zone_stats.items()):
+            writer.writerow({
+                'stratum': stratum,
+                'n_specimens': data['n'],
+                'host_richness_S': data['richness'],
+                'hosts': data['hosts'],
+                'small_n_warning': data['small_n_warning'],
+            })
+
     # === Write summary ===
+    n_field = sum(1 for r in host_call_rows if (r.get('control_status') or '').strip() == 'sample')
     summary = {
-        'total_samples_analyzed': len(host_call_rows),
-        'samples_excluded_controls': sum(1 for r in host_call_rows if r.get('control_status', '') in ('extraction_blank', 'pcr_negative', 'positive_control')),
+        'host_call_rows': len(host_call_rows),
+        'field_specimen_rows': n_field,
+        'field_specimens_identified': sum(1 for u in all_uids if host_sets.get(u)),
         'hbi_zone_comparisons': len(hbi_zone_comparisons),
+        'hbi_season_comparisons': len(hbi_season_comparisons),
         'hbi_species_comparisons': len(hbi_species_comparisons),
         'mixed_feeding_comparisons': len(mixed_zone_comparisons),
-        'strata_hbi_zone': list(hbi_by_zone.keys()),
-        'strata_hbi_species': list(hbi_by_species.keys()),
-        'strata_mixed_zone': list(mixed_by_zone.keys()),
-        'strata_richness_zone': list(richness_by_zone.keys()),
+        'strata_zone': sorted(zone_stats.keys()),
+        'strata_species': sorted(species_stats.keys()),
+        'strata_season': sorted(season_stats.keys()),
         'exploratory_note': args.exploratory_note,
         'notes': [
-            'All tests are Fisher\'s exact (two-tailed).',
+            "All tests are Fisher's exact (two-tailed) on host-identified field specimens.",
+            'A mosquito is counted once (host-set per sample_uid); controls are excluded.',
             'Holm-Bonferroni correction applied within each test family.',
             'Small-n warnings (n < 5 per stratum) indicate low power.',
-            'Kruskal-Wallis test for host richness is planned but not yet implemented.',
-            'scipy is required for exact Fisher\'s exact test; without it, chi-square approximation is used (n >= 10 only).',
-        ]
+            'scipy provides the exact Fisher test; without it a chi-square approximation is used (n >= 10 only) and odds_ratio is null.',
+        ],
     }
-    
     summary_path = Path(args.output_dir) / 'host_use_statistical_tests_summary.json'
     with open(summary_path, 'w') as fh:
         json.dump(summary, fh, indent=2)
         fh.write('\n')
-    print(f"Wrote summary: {summary_path}")
-    
-    # Print summary to stdout
-    print(f"\nHost ecology comparisons completed:")
+
+    print('Host ecology comparisons completed:')
+    print(f"  Field specimens identified: {summary['field_specimens_identified']}")
     print(f"  HBI zone comparisons: {len(hbi_zone_comparisons)}")
     print(f"  HBI species comparisons: {len(hbi_species_comparisons)}")
     print(f"  Mixed-feeding comparisons: {len(mixed_zone_comparisons)}")
-    print(f"  Host richness strata: {len(richness_by_zone)}")
+    print(f"  Output dir: {args.output_dir}")
 
 
 if __name__ == '__main__':

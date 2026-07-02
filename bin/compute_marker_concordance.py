@@ -41,39 +41,63 @@ def norm_taxon(name):
     return ' '.join((name or '').strip().lower().replace('_', ' ').split())
 
 
+UNRESOLVED_HOSTS = {'', 'unassigned', 'ambiguous', 'no_host_signal', 'unresolved'}
+
+
 def compute_concordance(host_call_rows):
-    """Compute concordance across markers for each sample.
-    
+    """Compute concordance across markers for each specimen (sample_uid).
+
+    Consumes the RAMBO host-call table (rambo_host_call_table.tsv). That table's real
+    columns are: sample_uid, sample_id, marker, control_status, host_assignment,
+    host_rank, best_confidence, best_assignment_status, mixed_status, ... For each
+    (specimen, marker) the rank-1 (dominant) host is taken as that marker's primary
+    call, so mixed-host specimens (>1 row per marker) are not double-counted here.
+    Controls (control_status != 'sample') are excluded.
+
     Args:
-        host_call_rows: List of dicts from rambo_host_call_table.tsv or similar
-        
+        host_call_rows: List of dicts from rambo_host_call_table.tsv
+
     Returns:
-        List of concordance dicts keyed by specimen_id
+        List of concordance dicts, one per specimen (sample_uid)
     """
-    # Group host calls by specimen_id
-    calls_by_specimen = defaultdict(list)
+    # Group the rank-1 host call per (specimen, marker). specimen = sample_uid, the
+    # per-mosquito key used throughout the pipeline (falls back to sample_id).
+    calls_by_specimen = defaultdict(dict)
+    sample_id_of = {}
     for row in host_call_rows:
-        specimen_id = row.get('specimen_id') or row.get('sample_id') or row.get('sample_uid', '')
+        if (row.get('control_status') or '').strip() != 'sample':
+            continue
+        specimen_id = row.get('sample_uid') or row.get('sample_id') or ''
         if not specimen_id:
             continue
-        marker = row.get('marker', '')
-        host_call = row.get('host_call', '') or row.get('scientific_name', '') or ''
-        if host_call and marker:
-            calls_by_specimen[specimen_id].append({
+        sample_id_of.setdefault(specimen_id, row.get('sample_id', ''))
+        marker = (row.get('marker') or '').strip()
+        host_call = (row.get('host_assignment') or '').strip()
+        if not marker or norm_taxon(host_call) in UNRESOLVED_HOSTS:
+            continue
+        try:
+            rank = int(row.get('host_rank') or 0)
+        except (TypeError, ValueError):
+            rank = 0
+        existing = calls_by_specimen[specimen_id].get(marker)
+        # Keep the dominant host per marker: rank 1 wins; otherwise the first seen.
+        if existing is None or (rank == 1 and existing.get('_rank') != 1):
+            calls_by_specimen[specimen_id][marker] = {
                 'marker': marker,
                 'host_call': host_call,
-                'confidence': row.get('confidence', ''),
-                'pident': float(row.get('pident', 0) or 0),
-                'lca_taxon': row.get('lca_taxon', '') or '',
-                'top_hit': row.get('top_hit', '') or '',
-                'assignment_method': row.get('assignment_method', ''),
-                'numt_risk': row.get('numt_risk', ''),
-            })
-    
+                'confidence': row.get('best_confidence', ''),
+                'assignment_status': row.get('best_assignment_status', ''),
+                'mixed_status': row.get('mixed_status', ''),
+                '_rank': rank,
+            }
+
     concordance_results = []
-    
-    for specimen_id, calls in sorted(calls_by_specimen.items()):
-        # Filter to markers with confident host calls
+
+    for specimen_id, marker_calls in sorted(calls_by_specimen.items()):
+        calls = list(marker_calls.values())
+        for c in calls:
+            c['sample_id'] = sample_id_of.get(specimen_id, '')
+        # Filter to markers with a confident (or at least graded) host call.
         confident_calls = [c for c in calls if c['host_call'] and c['confidence'] in ('high', 'medium', 'low')]
         
         if len(confident_calls) == 0:
@@ -102,8 +126,10 @@ def compute_concordance(host_call_rows):
         genus_names = [norm_taxon(' '.join(c['host_call'].split()[:1])) for c in confident_calls]
         genus_level_agree = len(set(genus_names)) == 1
         
-        # Check for ambiguous LCA-only calls
-        lca_only = all(c['lca_taxon'] and c['assignment_method'] in ('taxid_lca', 'conservative_lca') for c in confident_calls)
+        # Check for ambiguous LCA-only calls. The RAMBO host-call table carries the
+        # upstream assignment_status (e.g. assigned_taxid_lca, ambiguous_species_lca_genus);
+        # treat a call as LCA-only when every marker resolved via an LCA/genus collapse.
+        lca_only = all('lca' in (c.get('assignment_status') or '').lower() for c in confident_calls)
         
         # Determine concordance status
         if len(confident_calls) == 1:
@@ -199,17 +225,23 @@ def main():
     
     # Compute Cohen's Kappa
     kappa, n_agree, n_disagree = compute_cohens_kappa(concordance_results)
-    
-    # Write concordance TSV
-    if concordance_results:
-        fieldnames = list(concordance_results[0].keys())
-        with open(args.output, 'w', newline='') as fh:
-            writer = csv.DictWriter(fh, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
-            writer.writeheader()
-            for row in concordance_results:
-                writer.writerow(row)
-    
+
+    # Write concordance TSV. Always emit a header (even with zero specimens) so the
+    # Nextflow process always produces its declared output and downstream figures/report
+    # degrade gracefully rather than failing on a missing file.
+    fieldnames = [
+        'specimen_id', 'sample_id', 'markers_with_signal', 'host_calls_by_marker',
+        'species_level_concordance', 'genus_level_concordance', 'concordance_status',
+        'discordance_reason', 'possible_numt_flag', 'possible_mixed_meal_flag',
+    ]
+    with open(args.output, 'w', newline='') as fh:
+        writer = csv.DictWriter(fh, fieldnames=fieldnames, delimiter='\t', extrasaction='ignore')
+        writer.writeheader()
+        for row in concordance_results:
+            writer.writerow(row)
+
     # Write summary JSON
+    summary = None
     if args.summary_output:
         summary = {
             'total_samples': len(concordance_results),
@@ -236,11 +268,14 @@ def main():
             fh.write('\n')
     
     # Print summary to stdout
-    print(f"Multi-marker concordance computed:")
-    print(f"  Total samples: {len(concordance_results)}")
-    print(f"  Full species agreement: {summary['full_species_agreement'] if args.summary_output else sum(1 for r in concordance_results if r['concordance_status'] == 'full_species_agreement')}")
-    print(f"  Genus agreement: {summary['genus_agreement'] if args.summary_output else sum(1 for r in concordance_results if r['concordance_status'] == 'genus_agreement')}")
-    print(f"  Discordant: {summary['discordant'] if args.summary_output else sum(1 for r in concordance_results if r['concordance_status'] == 'discordant')}")
+    def _count(status):
+        return sum(1 for r in concordance_results if r['concordance_status'] == status)
+
+    print("Multi-marker concordance computed:")
+    print(f"  Total specimens: {len(concordance_results)}")
+    print(f"  Full species agreement: {_count('full_species_agreement')}")
+    print(f"  Genus agreement: {_count('genus_agreement')}")
+    print(f"  Discordant: {_count('discordant')}")
     print(f"  Cohen's Kappa: {kappa:.4f}")
     print(f"  Output: {args.output}")
 
