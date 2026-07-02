@@ -45,7 +45,9 @@ yet validated, so results are not over-interpreted. It covers both **scientific 
    of these thresholds and of host-*fraction* accuracy, however, requires mixed controls prepared at
    **known mixing ratios** — the samplesheet declares *which* hosts a control contains, not *what
    proportions*, so this is a **wet-lab metadata gap that cannot be closed by pipeline code**. Until
-   known-ratio controls exist, host fractions remain evidence summaries only.
+   known-ratio controls exist, host fractions remain evidence summaries only. A full experimental
+   design to close this — including the critical blood-volume vs gDNA vs mtDNA-copy distinction — is
+   in [`mixed_host_control_protocol.md`](mixed_host_control_protocol.md).
    *Safeguards now implemented:* the pipeline records `host_fractions_benchmarked: false` in the
    run manifest and the report; the report explicitly states host fractions are evidence summaries.
    Both *single-host* and *lab-prepared mixed-host* controls are now checked automatically against
