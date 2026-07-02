@@ -92,3 +92,38 @@ docker build -t haema-medaka:0.3.0 -f containers/haema-medaka/Dockerfile .   # o
   real pooled/raw inputs are introduced via `--advanced_demux_command_template`.
 - Image digests were resolved on 2026-06-11. They are immutable; re-resolve only if you
   deliberately upgrade a tool version.
+
+## Pinning the custom images (`haema-python`, `haema-r`, `haema-figures`) — B4
+
+The three custom images are currently **built locally and not pushed to a registry**, so
+they have no immutable `@sha256:` *manifest* digest to pin in `nextflow.config` — pinning a
+local image ID would not be reproducible for anyone else. This is a deliberate, documented
+state, not an oversight. Recommended procedure to make them fully reproducible:
+
+```bash
+# 1. Build (Dockerfiles under pipeline/containers/)
+docker build -t <registry>/haema-python:0.3.0 pipeline/containers/haema-python
+docker build -t <registry>/haema-r:0.3.0       pipeline/containers/haema-r
+docker build -t <registry>/haema-figures:0.4.0 pipeline/containers/haema-figures
+
+# 2. Push and capture the manifest digest
+docker push <registry>/haema-python:0.3.0            # note the returned sha256:...
+docker inspect --format='{{index .RepoDigests 0}}' <registry>/haema-python:0.3.0
+
+# 3. Pin in nextflow.config, after which the tag is only a human label
+#    params.python_container  = '<registry>/haema-python:0.3.0@sha256:...'
+#    params.r_container        = '<registry>/haema-r:0.3.0@sha256:...'
+#    params.figures_container  = '<registry>/haema-figures:0.4.0@sha256:...'
+```
+
+For provenance on the machine that produced the current results, the **local image IDs**
+(not registry digests) were:
+
+| Image | Local image ID |
+|-------|----------------|
+| `haema-python:0.3.0` | `sha256:3e1d307ec038…` |
+| `haema-r:0.3.0` | `sha256:87693d387638…` |
+| `haema-figures:0.4.0` | `sha256:88efc9c45a31…` |
+
+TODO (release): push the three images to the project registry and replace the tag-only
+references in `nextflow.config` with `@sha256:` manifest digests.
