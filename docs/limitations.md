@@ -5,7 +5,12 @@ yet validated, so results are not over-interpreted. It covers both **scientific 
 (the caveats below) and **feature status** (implemented vs staged — see the
 [table at the end](#feature-status-implemented-vs-staged)).
 
-> **Last updated:** 2026-06-30 (literature-guided re-engineering, branch `reengineer-reference-taxonomy-host-use`)
+> **Last updated:** 2026-07-02 (PI-led re-engineering, branch `pi-led-reengineering`). Several items
+> previously listed as "planned" are now **implemented and exercised on real data** (broad BLAST
+> taxonomy, BOLD-aware mode, NUMT reporting, multi-marker concordance, host-ecology comparisons +
+> Kruskal-Wallis, concordance heatmap); the remaining open items below are genuinely open, and the
+> ones that need **wet-lab inputs** (known-ratio mixed controls, digestion metadata) are marked as
+> such because they cannot be closed by code alone.
 
 ## Implemented and exercised on data
 
@@ -29,11 +34,18 @@ yet validated, so results are not over-interpreted. It covers both **scientific 
 
 ## Caveats you must respect when interpreting results
 
-1. **Denoising thresholds are not yet benchmarked.** `mixed_denoise_min_cluster_size` (default 20)
-   and `mixed_denoise_min_cluster_fraction` (default 0.05) trade minority-host **sensitivity**
-   for tractability and noise rejection. Low-abundance second hosts (< ~5% of marker reads) can be
-   missed; very permissive values over-split noisy reads. These need calibration against
-   **mixed-host positive controls** before quantitative host-fraction claims.
+1. **Denoising thresholds are not yet fully benchmarked (wet-lab input gap).**
+   `mixed_denoise_min_cluster_size` (default 20) and `mixed_denoise_min_cluster_fraction`
+   (default 0.05) trade minority-host **sensitivity** for tractability and noise rejection.
+   Low-abundance second hosts (< ~5% of marker reads) can be missed; very permissive values
+   over-split noisy reads.
+   *Status (2026-07-02):* **detection/recovery** is now exercised — the mixed-host positive
+   controls flow through the run and are scored automatically in `positive_control_check.tsv`
+   (`mixed_host_recovery_rate`, per-host recovered/missing/unexpected). **Quantitative** calibration
+   of these thresholds and of host-*fraction* accuracy, however, requires mixed controls prepared at
+   **known mixing ratios** — the samplesheet declares *which* hosts a control contains, not *what
+   proportions*, so this is a **wet-lab metadata gap that cannot be closed by pipeline code**. Until
+   known-ratio controls exist, host fractions remain evidence summaries only.
    *Safeguards now implemented:* the pipeline records `host_fractions_benchmarked: false` in the
    run manifest and the report; the report explicitly states host fractions are evidence summaries.
    Both *single-host* and *lab-prepared mixed-host* controls are now checked automatically against
@@ -48,13 +60,14 @@ yet validated, so results are not over-interpreted. It covers both **scientific 
    fragment a single host across clusters; downstream identity-consensus and taxonomy collapse
    these, but cluster *counts* are not host counts. Trust `host_call_table.tsv`, not raw cluster
    numbers.
-3. **Taxonomy breadth is bounded by the curated panel.** The bundled panel is 20 vertebrate
-   mitogenomes (common Ghanaian/peridomestic hosts). Hosts absent from the panel will be
-   unassigned or mis-assigned to the nearest relative unless you supply an `nt` fallback
-   (`--fallback_blast_db`). The panel still needs publication-scale expansion and versioning.
-   The `nt`-fallback and taxdump-backed-LCA paths are implemented and unit-tested but were **not**
-   exercised in the demonstration run (which used `--taxonomy_strategy curated_only` with the
-   conservative top-hit LCA and no `--taxdump_dir`).
+3. **Taxonomy breadth — now broadened beyond the curated panel.** The curated panel (20 vertebrate
+   mitogenomes) is **no longer the primary limit**: `--reference_mode broad_blast` runs the curated
+   panel as a fast pre-check plus a broad local database (e.g. NCBI RefSeq mitochondrion release 235,
+   ~18k taxa, built by `bin/build_reference_db.py`) that resolves hosts absent from the panel. This
+   was **exercised on real data** (subset validation: 24 features resolved via the broad fallback
+   that the curated panel could not). *Residual:* the curated panel itself still needs
+   publication-scale expansion/versioning if used alone (`curated_panel` mode), and a
+   Chordata-restricted broad build would avoid vector/microbial matches (see vector caveat below).
 4. **Taxids come from the curated sidecar (not embedded in the BLAST DB) — but taxid-LCA still
    works.** The panel's descriptive deflines (`Species|Accession|...`) exceed BLAST's 50-char
    `-parse_seqids` local-id limit, so the DB is built without `-parse_seqids`/`-taxid_map`.
@@ -81,11 +94,13 @@ The remote fallback queries NCBI `nt`, not the Barcode of Life Data System (BOLD
 et al. 2018) and may resolve identities that NCBI `nt` cannot — particularly for avian and
 reptilian hosts, which are common in some settings (Santos et al. 2019; Ogola et al. 2017).
 
-**Current state:** COI queries fall through to NCBI `nt` only. BOLD is not queried.
+**Current state (2026-07-02):** **Implemented.** Mode D (`--reference_mode bold_aware`) accepts a
+user-supplied BOLD-derived COI FASTA (`--bold_fasta`) as a reproducible local-first database; the
+broad database (RefSeq mitochondrion) also covers COI. Live BOLD **API** integration remains
+intentionally unimplemented (non-reproducible runtime dependence on an external service; see
+`docs/pi_reengineering_report.md` §3).
 
-**Staged:** Mode D (BOLD-aware COI) — user-supplied BOLD-derived COI FASTA database support is
-planned as a reproducible local-first option. Live BOLD API integration is lower priority because
-it introduces non-reproducible runtime dependence on an external service.
+**Residual:** a bundled, versioned BOLD-derived COI reference is not shipped; the user supplies it.
 
 **Workaround:** Users may download BOLD COI sequences (or other vertebrate mitochondrial data) and
 supply them via `--blast_db` in `nt_only` mode, or combine them with the curated panel into a
@@ -97,8 +112,11 @@ Nuclear mitochondrial pseudogenes (NUMTs) are non-functional mitochondrial DNA c
 into the nuclear genome. They can be co-amplified alongside genuine mitochondrial DNA, producing
 misleading host identifications.
 
-**Current state:** No NUMT detection or filtering is implemented. NUMT risk is not flagged in
-outputs.
+**Current state (2026-07-02):** **Implemented as a per-marker reporting flag.** `run_manifest.json`
+(`reference_database.numt_risk`) records the risk + rationale per marker (verified: co1_short =
+moderate, co1_long = low, cyt_b = low). It is a **caution flag, not a hard filter** — NUMT removal
+would require database-confirmed NUMT sequences, which are not available. Discordance between CytB
+and COI for the same specimen is surfaced by the multi-marker concordance output for investigation.
 
 **Risk by marker:**
 
@@ -221,27 +239,35 @@ blood volumes (Logue et al. 2016).
 - Medaka polishing — implemented and model-checked at runtime, but mixed-host polishing has not
   been validated against positive controls.
 - Production custom images (`haema-python`, `haema-r`) must be built or pulled from a registry.
-- **BOLD-aware COI mode (Mode D)** — user-supplied BOLD-derived COI FASTA support is planned.
-  Live BOLD API integration is lower priority due to reproducibility concerns.
-- **Multi-marker concordance analysis** — planned (Recommendation 10). Not yet implemented.
-- **Host ecology statistical comparisons** — planned (Recommendation 9). Not yet implemented.
-- **NUMT risk reporting** — planned (Recommendation 8). Not yet implemented.
-- **Digestion class metadata** — planned (Recommendation 1). Not yet implemented.
+- **Live BOLD API** — intentionally unimplemented (reproducibility). Local BOLD-derived COI FASTA
+  (Mode D) **is** implemented.
+- **Quantitative host-fraction calibration** — needs mixed controls at **known mixing ratios**
+  (wet-lab input); not closable by code.
+- **Digestion class metadata** (`digestion_class`, Recommendation 1) — no such field in the data;
+  not implemented.
+- **Curated-panel versioning** (checksums/accessions/retrieval dates) and a **bundled taxdump
+  snapshot** — curated-data tasks, not yet done.
+- **Figure-system consolidation** — two figure systems coexist; consolidation deferred
+  (`docs/architecture_review.md`).
+
+> Implemented since the 2026-06-30 review (no longer staged): BOLD-aware Mode D, multi-marker
+> concordance, host-ecology comparisons (Fisher + Holm) + Kruskal-Wallis, NUMT risk reporting,
+> concordance heatmap, broad BLAST taxonomy.
 
 ## What would close these gaps (next scientific steps)
 
-- Sequence and analyse **mixed-host positive controls** to calibrate denoising thresholds and
-  confirm Medaka does not merge hosts.
+Still open (wet-lab / curated-data dependent):
+
+- Sequence and analyse **known-ratio mixed-host controls** to calibrate denoising thresholds and
+  host-fraction accuracy, and confirm Medaka does not merge hosts.
 - Expand and **version** the curated panel (checksums, accessions, retrieval dates); add
   marker-specific extracted references.
-- Add a pinned NCBI **taxdump** snapshot and migrate panel seqids to accessions to enable native
-  taxid LCA.
-- Benchmark host-fraction estimates against known mixtures before reporting quantitative
-  zoophagic indices.
-- Implement **BOLD-aware COI mode** (Mode D) for expanded avian/reptilian host coverage.
-- Implement **multi-marker concordance analysis** to identify potential NUMT or reference gaps.
-- Implement **NUMT risk reporting** per marker.
-- Implement **host ecology statistical comparisons** (Fisher's exact + Holm correction).
+- Add a pinned NCBI **taxdump** snapshot for native taxid-lineage LCA on the curated default path.
+- Optionally build a **Chordata-restricted** broad database to remove vector/microbial matches.
+
+Done since the 2026-06-30 review: BOLD-aware COI mode (Mode D), multi-marker concordance, NUMT risk
+reporting, host-ecology statistical comparisons (Fisher + Holm) and Kruskal-Wallis, and the broad
+BLAST taxonomy that lifts the panel-breadth limit.
 
 ## Feature status (implemented vs staged)
 
@@ -257,5 +283,5 @@ or resources.
 | **Consensus / polishing**     | Greedy cluster consensus and exact dereplication; Medaka polishing**on by default** (needs the pinned ONT Medaka image; model verified at runtime by `MEDAKA_MODEL_PREFLIGHT`; the `test` profile disables it)                                                                                      | Validation that Medaka polishing does not merge co-eluting hosts (needs mixed-host controls)                                                                                                                                                                                                                                                                  |
 | **Taxonomy / LCA**            | Curated-panel BLASTn; optional local`nt` fallback; taxids backfilled from the curated sidecar; conservative top-hit and exact-taxid LCA without a taxdump, and true taxdump-backed LCA with `--taxdump_dir`                                                                                               | Panel expansion/versioning, marker-specific extracted references, and a bundled NCBI taxdump snapshot. Note:`makeblastdb` is run **without** `-parse_seqids`/`-taxid_map` (the panel's descriptive deflines exceed BLAST's 50-char local-id limit); the taxid map is emitted as a provenance artifact only and taxids are joined from the sidecar |
 | **Contamination & R ecology** | Negative-control background thresholds; decontam (formal with`haema-r`, documented fallback otherwise); phyloseq + decontaminated RDS/TSV endpoints                                                                                                                                                         | Quantitative host-fraction validation (needs controls at known mixing ratios)                                                                                                                                                                                                                                                                                 |
-| **Ecological indices**        | Human Blood Index, animal/zoophily index, feeding-type partition, mixed-feeding rate, host-specific blood indices, and host diversity (richness/Shannon/Simpson/Pielou) with Wilson 95% CIs, stratified by ecological zone, vector sibling species, and collection period/season (`ecological_indices.tsv`) | **Planned:** Fisher's exact + Holm pairwise comparisons between strata (Recommendation 9). **Planned:** Kruskal-Wallis for host richness (Recommendation K). **Planned:** Multi-marker concordance analysis (Recommendation 10).                                                                                                            |
-| **Reporting**                 | Custom HÆMA HTML report (primary); optional MultiQC custom-content summary tables; ten publication figures (`07_figures/`, PDF/SVG/PNG) built from the endpoint tables; machine-readable `run_manifest.json`                                                                                             | **Planned:** Concordance heatmap figure (Recommendation 12). **Planned:** Database-source contribution plot. **Planned:** NUMT risk summary plot. **Planned:** HBI/ABI forest plot with corrected denominators.                                                                                                                       |
+| **Ecological indices**        | Human Blood Index, animal/zoophily index, feeding-type partition, mixed-feeding rate, host-specific blood indices, and host diversity (richness/Shannon/Simpson/Pielou) with Wilson 95% CIs, stratified by ecological zone, vector sibling species, and collection period/season (`ecological_indices.tsv`); **Fisher's exact + Holm pairwise comparisons** between strata and **Kruskal-Wallis** host-richness (`host_ecology_comparisons/`); **multi-marker concordance** (`marker_concordance.tsv`); vector self-hits excluded via `--non_host_genera` | Quantitative host-fraction accuracy (needs known-ratio controls) |
+| **Reporting**                 | Custom HÆMA HTML report (primary); optional MultiQC custom-content summary tables; publication figures (`07_figures/`, PDF/SVG/PNG) built from the endpoint tables; **multi-marker concordance heatmap** (`figure_S3`, implemented + wired; renders when concordance data is non-degenerate — skipped with a warning on tiny/degenerate strata); machine-readable `run_manifest.json` with reference-database provenance + per-marker NUMT risk | **Planned:** database-source contribution plot; NUMT risk summary plot; consolidation of the two figure systems (`docs/architecture_review.md`) |
