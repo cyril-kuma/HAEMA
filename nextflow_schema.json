@@ -487,8 +487,8 @@
                 },
                 "rambo_min_host_fraction": {
                     "type": "number",
-                    "default": 0.01,
-                    "description": "Minimum host-level fraction per sample/marker for the RAMBO-style host-call table."
+                    "default": 0.02,
+                    "description": "Minimum host-level read fraction per sample/marker for the RAMBO-style host-call table. Default 0.02 is calibrated on in-silico known-ratio mixtures (docs/denoising_calibration): 0% false positives at 100% minor-host detection >=5%, vs 11-17% false positives at 0.01. Lower it (e.g. 0.01) only to chase <5% minor hosts, accepting more false positives."
                 },
                 "rambo_include_contaminants": {
                     "type": "boolean",

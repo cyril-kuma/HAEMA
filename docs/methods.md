@@ -130,14 +130,18 @@ and COI host calls for the same sample may warrant NUMT investigation.
 
 Host assemblages per sample/marker were summarised with an abundance/evidence model that preserves
 multiple hosts above configurable read and fraction thresholds, classifying each as single- or
-mixed-host. The RAMBO evidence model requires ≥3 supporting reads AND ≥1% of marker reads per host
-per sample.
+mixed-host. The RAMBO evidence model requires ≥3 supporting reads AND **≥2% of marker reads** per
+host per sample (`rambo_min_host_fraction = 0.02`).
 
-**Threshold comparison:** The 1% fraction threshold is more permissive than the >10% threshold
-used by Logue et al. (2016) for minor host detection. This increased sensitivity is appropriate
-for a discovery screen but means the pipeline may report mixed meals more frequently than gel-based
-or HRM methods. Stricter thresholds can be applied post-hoc by filtering the `host_fraction`
-column in `rambo_host_call_table.tsv`.
+**Threshold basis (in-silico calibrated).** The 2% default was chosen from an in-silico known-ratio
+mixture experiment (180 synthetic mixtures; see `docs/denoising_calibration/`): at 2% the false-
+positive rate is 0% while minor-host detection is 100% for minor hosts ≥5% of reads (the limit of
+detection at typical depth). The previously-used 1% threshold sits in the noise floor (11–17% false
+positives), and Logue et al. (2016)'s >10% threshold is over-conservative (misses ~half of true 5–
+10% minors). 2% is therefore the evidence-based middle ground. To chase minor hosts below 5%, lower
+`--rambo_min_host_fraction` (accepting more false positives); the `host_fraction` column in
+`rambo_host_call_table.tsv` supports post-hoc re-thresholding. Read fractions remain support
+evidence only, not blood volumes (`host_fractions_benchmarked: false`).
 
 **Important:** Host fractions are **supporting evidence only** and do **not** represent proportional
 ingested blood volumes (Logue et al. 2016). The run manifest records `host_fractions_benchmarked:

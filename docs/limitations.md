@@ -207,15 +207,20 @@ risk** than reads with explicit primer evidence.
 **Recommendation:** Document this risk in `docs/methods.md`. Consider making length-fallback
 opt-in (`allow_length_fallback = false`) for production runs where marker accuracy is critical.
 
-## RAMBO threshold comparison (added 2026-06-30)
+## RAMBO threshold — in-silico calibrated (updated 2026-07-02)
 
-The RAMBO evidence model uses ≥3 reads AND ≥1% fraction per host per marker. This is **more
-sensitive** than the >10% read fraction threshold used by Logue et al. (2016) for minor host
-detection.
+The RAMBO evidence model uses ≥3 reads AND **≥2% fraction** per host per marker
+(`rambo_min_host_fraction = 0.02`, default). This value is **calibrated**, not guessed: an in-silico
+known-ratio mixture experiment (180 synthetic mixtures; `docs/denoising_calibration/`) showed 2%
+gives **0% false positives at 100% detection for minor hosts ≥5%** (the limit of detection). The
+previous 1% default lay in the noise floor (11–17% false positives); Logue et al. (2016)'s >10% is
+over-conservative (misses ~half of true 5–10% minors).
 
-**Implication:** The pipeline may report mixed meals more frequently than gel-based or HRM methods.
-This sensitivity is appropriate for a discovery screen but means mixed-meal rates should not be
-directly compared to studies using stricter thresholds.
+**Residual limitations:** (i) the LOD is ~5% minor host at typical depth — genuine minor hosts below
+5% may be missed; (ii) the calibration is on **simulated** ONT reads, so re-run the harness on real
+pure single-host pools (`bin/make_insilico_mixtures.py --pool …`) once available, before treating
+2% as final; (iii) mixed-meal rates still should not be compared directly across studies using
+different thresholds/platforms.
 
 **Safeguard:** The RAMBO output `summary.tsv` and the run manifest record
 `host_fractions_benchmarked: false`. Stricter thresholds can be applied post-hoc by filtering the

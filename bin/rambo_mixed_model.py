@@ -167,7 +167,7 @@ def main():
     parser.add_argument("--master-endpoint", required=True)
     parser.add_argument("--marker-summary", required=True)
     parser.add_argument("--min-host-reads", type=int, default=3)
-    parser.add_argument("--min-host-fraction", type=float, default=0.01)
+    parser.add_argument("--min-host-fraction", type=float, default=0.02)
     parser.add_argument("--include-contaminants", default="false")
     parser.add_argument("--output-evidence", required=True)
     parser.add_argument("--output-host-calls", required=True)
