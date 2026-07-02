@@ -58,6 +58,23 @@ Full data: [`benchmark_sweep.tsv`](benchmark_sweep.tsv) (detection + false-posit
 threshold), [`benchmark_per_mixture.tsv`](benchmark_per_mixture.tsv) (observed-vs-true per mixture),
 [`mixture_manifest.tsv`](mixture_manifest.tsv) (truth).
 
+## Relationship to the pipeline, the samplesheet, and mixed-feeding controls
+
+- **`make_insilico_mixtures.py` is a standalone developer/validation tool**, not part of the
+  Nextflow workflow. It is run manually (see "How to regenerate"), **not** via `nextflow run` and
+  **not** driven by the samplesheet.
+- **It does not change the samplesheet format.** The production samplesheet schema
+  (`docs/samplesheet_preparation.md`) is unchanged.
+- **It does not remove the need for mixed-feeding controls** — it changes what they are needed *for*:
+  - The tool is a computational substitute for known-*ratio* controls **for the single purpose of
+    picking the detection threshold** (which previously blocked us).
+  - **Real mixed-feeding positive controls are still required and still run through the pipeline**
+    (`sample_type = positive_control`, `expected_host = A;B`): they validate end-to-end
+    detection/recovery on *real* data via `positive_control_check.tsv` — which simulation cannot do.
+  - **Quantitative** validation (read fraction ↔ blood proportion) still requires wet-lab
+    known-ratio controls (`../mixed_host_control_protocol.md`); `host_fractions_benchmarked` stays
+    `false` until then.
+
 ## Honest scope (critical appraisal)
 
 - **What this calibrates:** the *bioinformatic* detection floor and the minor-host fraction

@@ -47,6 +47,9 @@ merge computationally distinct, separately-cached stages for aesthetics.
 | `figure_style.py` | shared figure styling (imported by figure scripts) | **keep (library)** | Colourblind-safe palette/style shared by figure scripts |
 | `parse_blast_assignments.py` | conservative LCA + marker guard | **keep (core)** | Scientific boundary; unit-tested |
 | `build_reference_db.py` | broad reference-DB builder (new) | **keep (CLI tool)** | Reproducible DB provenance; standalone by design |
+| `make_insilico_mixtures.py` | synthetic known-ratio mixture builder (new) | **keep (validation tool)** | Standalone; not in the pipeline/samplesheet; builds calibration data |
+| `classify_reads.py` | read-classification core / ONT Logue classify-then-count (new) | **keep (staged)** | Standalone now; becomes the `read_classification` module when wired |
+| `benchmark_mixed_detection.py` | detection/threshold sweep (new) | **keep (validation tool)** | Standalone; produces `docs/denoising_calibration/` |
 | `build_reference_panel.py` | curated-panel builder | **keep (CLI tool)** | Documents how the curated panel was built; not pipeline-called by design |
 | `verify_reference_assets.py` | asset checksum/sidecar check | **keep (tooling)** | Used by `validate_release.sh` + `Makefile` |
 | all other scripts | 1:1 with a process | **keep** | Each is a distinct, separately-cached, testable stage |

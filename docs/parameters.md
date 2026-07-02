@@ -78,6 +78,9 @@ speed; pass `--skip_taxonomy false` when you want the demo to exercise curated B
 | Parameter | Default | Description |
 |---|---|---|
 | `--enable_rambo_model` | true | RAMBO-style mixed-host evidence & host calls. |
+| `--rambo_min_host_reads` | 3 | Min supporting reads per host per sample/marker for a host call. |
+| `--rambo_min_host_fraction` | 0.02 | Min host read fraction per sample/marker. **In-silico calibrated** (docs/denoising_calibration): 0% false positives at 100% detection ≥5% minor host; lower toward 0.01 to chase <5% minors (more false positives). |
+| `--non_host_genera` | "" | Genera excluded as non-host (vector self-hits); empty = built-in vector default. |
 | `--enable_r_outputs` | true | phyloseq/decontam endpoints (needs `--enable_rambo_model`). |
 | `--strict_bioconductor` | false | Fail if formal phyloseq/decontam are missing (needs `haema-r`). |
 | `--decontam_threshold` | 0.5 | decontam / negative-control prevalence threshold. |
