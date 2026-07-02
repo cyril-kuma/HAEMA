@@ -233,7 +233,31 @@ def main():
                         mh.write(f"{mid}\t{major}\t{minor}\t{maj}\t{mino}\t"
                                  f"{true_minor:.4f}\t{args.depth}\t{rep}\n")
     n_mix = sum(1 for _ in manifest.open()) - 1
-    print(f"[mixtures] wrote {n_mix} synthetic mixtures + {manifest}")
+
+    # Explicit validation-status metadata — carries the non-negotiable caveats with the data.
+    import json
+    meta = {
+        "tool": "make_insilico_mixtures.py",
+        "purpose": "synthetic known-ratio mixtures for computational mixed-host DETECTION testing",
+        "in_silico_mixture_validation": True,
+        "wetlab_known_ratio_validation": False,
+        "host_fractions_benchmarked": False,
+        "read_source": "simulated_from_reference" if args.simulate else "real_pool_fastq",
+        "seed": args.seed,
+        "hosts": hosts,
+        "ratios": [f"{a}:{b}" for a, b in ratios],
+        "depth": args.depth,
+        "replicates": args.replicates,
+        "n_mixtures": n_mix,
+        "read_id_provenance": "MAJ_<host>_<k> / MIN_<host>_<k> encodes the source host per read",
+        "caveat": ("In-silico mixtures test computational detection/regression only. They do NOT "
+                   "validate blood-volume quantification, extraction/PCR/primer bias, DNA "
+                   "degradation, or the read-fraction<->blood-proportion relationship. Read "
+                   "fractions remain support evidence; host_fractions_benchmarked stays false until "
+                   "wet-lab known-ratio controls exist (docs/mixed_host_control_protocol.md)."),
+    }
+    (out / "run_metadata.json").write_text(json.dumps(meta, indent=2) + "\n")
+    print(f"[mixtures] wrote {n_mix} synthetic mixtures + {manifest} + run_metadata.json (seed={args.seed})")
 
 
 if __name__ == "__main__":

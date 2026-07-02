@@ -1,0 +1,7 @@
+mixture_id	major_host	minor_host	major_ratio	minor_ratio	true_minor_fraction	depth	replicate
+Homo_sapiens__Bos_taurus__100-0__r0	Homo_sapiens	Bos_taurus	100	0	0.0000	300	0
+Homo_sapiens__Bos_taurus__90-10__r0	Homo_sapiens	Bos_taurus	90	10	0.1000	300	0
+Homo_sapiens__Bos_taurus__50-50__r0	Homo_sapiens	Bos_taurus	50	50	0.5000	300	0
+Bos_taurus__Homo_sapiens__100-0__r0	Bos_taurus	Homo_sapiens	100	0	0.0000	300	0
+Bos_taurus__Homo_sapiens__90-10__r0	Bos_taurus	Homo_sapiens	90	10	0.1000	300	0
+Bos_taurus__Homo_sapiens__50-50__r0	Bos_taurus	Homo_sapiens	50	50	0.5000	300	0

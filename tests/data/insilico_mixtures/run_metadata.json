@@ -1,0 +1,23 @@
+{
+  "tool": "make_insilico_mixtures.py",
+  "purpose": "synthetic known-ratio mixtures for computational mixed-host DETECTION testing",
+  "in_silico_mixture_validation": true,
+  "wetlab_known_ratio_validation": false,
+  "host_fractions_benchmarked": false,
+  "read_source": "simulated_from_reference",
+  "seed": 42,
+  "hosts": [
+    "Homo_sapiens",
+    "Bos_taurus"
+  ],
+  "ratios": [
+    "100:0",
+    "90:10",
+    "50:50"
+  ],
+  "depth": 300,
+  "replicates": 1,
+  "n_mixtures": 6,
+  "read_id_provenance": "MAJ_<host>_<k> / MIN_<host>_<k> encodes the source host per read",
+  "caveat": "In-silico mixtures test computational detection/regression only. They do NOT validate blood-volume quantification, extraction/PCR/primer bias, DNA degradation, or the read-fraction<->blood-proportion relationship. Read fractions remain support evidence; host_fractions_benchmarked stays false until wet-lab known-ratio controls exist (docs/mixed_host_control_protocol.md)."
+}

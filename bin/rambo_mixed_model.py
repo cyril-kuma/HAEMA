@@ -352,7 +352,12 @@ def main():
         # Scientific safeguard: host fractions are abundance EVIDENCE, not validated quantitative
         # estimates. The recovery rate above is a sensitivity benchmark only when the declared
         # mixed-host composition comes from genuine lab-prepared controls.
+        # Validation-status fields (kept explicit so reports/manifests cannot overclaim):
+        #  - in-silico mixtures calibrate computational DETECTION only (docs/denoising_calibration);
+        #  - quantitative read-fraction<->blood-proportion calibration needs wet-lab known-ratio
+        #    controls (docs/mixed_host_control_protocol.md) and is NOT done.
         {"metric": "host_fractions_benchmarked", "value": "false"},
+        {"metric": "wetlab_known_ratio_validation", "value": "false"},
     ]
     write_tsv(args.output_summary, summary_rows, ["metric", "value"])
 

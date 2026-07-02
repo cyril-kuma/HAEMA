@@ -53,27 +53,44 @@ the box; override with `--primers` / `--reference_fasta` for your own.
 
 ## 4. Enable real UMAP/HDBSCAN denoising (recommended for real data)
 
-The default `python:3.11` image cannot run UMAP, so denoising falls back to greedy clustering.
-Build the scientific image once and pass it in:
+The default `python:3.11` image cannot run UMAP, so denoising falls back to greedy clustering. The
+**`workstation` profile now selects the custom images by default** (`haema-python`, `haema-r`,
+`haema-figures`), so `-profile workstation,docker` runs real denoising out of the box — you just
+have to build (or pull) the images once:
 
 ```bash
 docker build -t haema-python:0.3.0 -f containers/haema-python/Dockerfile .
+docker build -t haema-r:0.3.0       -f containers/haema-r/Dockerfile .
+docker build -t haema-figures:0.4.0 -f containers/haema-figures/Dockerfile .
 ```
+
+(To override without the profile, pass `--python_container haema-python:0.3.0` etc. See
+`docs/CONTAINER_STRATEGY.md`.)
 
 ## 5. Run on your data
 
+Out of the box (curated panel + bundled reference; no external database needed):
+
 ```bash
-nextflow run . -profile local \
+nextflow run . -profile workstation,docker \
   --input        "$PWD/my_samplesheet.csv" \
   --raw_data_dir "$PWD/Runs" \
-  --taxonomy_strategy curated_only \
-  --python_container haema-python:0.3.0 \
-  --enable_rambo_model true \
   --outdir results/myrun --log_dir logs/myrun -resume
 ```
 
-Use **absolute paths**. Add `--fallback_blast_db /path/to/nt/nt --blast_db_mount /path/to/blast_db`
-to enable the `nt` fallback for hosts outside the curated panel.
+Recommended broad run (catches unexpected hosts; supply a local BLAST database — see §7 Mode B and
+`docs/reproducibility.md` for building a RefSeq-mitochondrion database with `bin/build_reference_db.py`):
+
+```bash
+nextflow run . -profile workstation,docker \
+  --input "$PWD/my_samplesheet.csv" --raw_data_dir "$PWD/Runs" \
+  --reference_mode broad_blast \
+  --blast_db /path/to/db/refseq_mito --blast_db_mount /path/to/db \
+  --outdir results/myrun -resume
+```
+
+Use **absolute paths**. `run_full.sh` is a machine-specific wrapper of the broad command; core
+defaults (containers, Medaka, RAMBO thresholds) live in the profile/config, not the wrapper.
 
 ## 6. Inspect results
 

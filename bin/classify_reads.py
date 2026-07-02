@@ -72,6 +72,27 @@ def best_hits_from_paf(paf_lines, min_identity, min_coverage):
     return {q: t for q, (_, t) in best.items()}
 
 
+def denoise_and_call(counts, total_classified, min_reads, min_fraction, global_min, non_host_genera):
+    """Abundance-denoise per-taxon read counts and make the single/mixed/none call (Logue-style).
+
+    Returns (kept, call) where kept = {taxon: (count, fraction)} and call is
+    'mixed' (>=2 hosts kept), 'single' (1), or 'none'. Vector/non-host genera and taxa below the
+    read/fraction/global-count floors are dropped. This is the core mixed-host DETECTION logic and
+    is unit-tested (tests/test_insilico_mixed_detection.py).
+    """
+    kept = {}
+    for taxon, c in counts.items():
+        if not is_host(taxon, non_host_genera):
+            continue
+        if c <= global_min:
+            continue
+        frac = c / total_classified if total_classified else 0.0
+        if c >= min_reads and frac >= min_fraction:
+            kept[taxon] = (c, frac)
+    call = "mixed" if len(kept) >= 2 else ("single" if kept else "none")
+    return kept, call
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     src = ap.add_mutually_exclusive_group(required=True)
@@ -111,15 +132,8 @@ def main():
     total_classified = sum(counts.values())
 
     # Abundance denoise (Logue-style: count-based, not geometry-based).
-    kept = {}
-    for taxon, c in counts.items():
-        if not is_host(taxon, non_host):
-            continue
-        if c <= args.global_min_count:
-            continue
-        frac = c / total_classified if total_classified else 0.0
-        if c >= args.min_reads_per_host and frac >= args.min_host_fraction:
-            kept[taxon] = (c, frac)
+    kept, _call = denoise_and_call(counts, total_classified, args.min_reads_per_host,
+                                   args.min_host_fraction, args.global_min_count, non_host)
 
     with open(args.output_counts, "w") as fh:
         fh.write("sample_uid\tmarker\thost_assignment\tcount\tfraction\tassignment_method\n")

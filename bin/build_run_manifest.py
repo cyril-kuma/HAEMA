@@ -270,6 +270,17 @@ def main():
             # run is reproducible/auditable even if the panel or sidecar is edited or overridden.
             "reference_checksums_sha256": parameters.get("reference_checksums_sha256", {}),
         },
+        # Explicit validation status so no downstream consumer can overclaim quantitation.
+        "validation_status": {
+            "host_fractions_benchmarked": False,
+            "wetlab_known_ratio_validation": False,
+            "in_silico_mixture_detection_calibrated": True,
+            "note": ("Host read fractions are support evidence only, NOT blood-volume estimates. "
+                     "Mixed-host DETECTION thresholds are calibrated in silico "
+                     "(docs/denoising_calibration); quantitative read-fraction<->blood-proportion "
+                     "calibration requires wet-lab known-ratio controls "
+                     "(docs/mixed_host_control_protocol.md) and has not been performed."),
+        },
         "outputs": outputs,
         "input_validation": read_json(args.input_validation_report),
         "production_preflight": read_json(args.production_preflight_report),
